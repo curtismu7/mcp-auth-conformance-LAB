@@ -1,0 +1,16 @@
+{
+  "demos": [
+    {
+      "id": "mcp-auth-conformance-lab",
+      "name": "MCP Auth Conformance LAB",
+      "catalogId": "D35+D2",
+      "kind": "Tester",
+      "description": "Score a mock MCP server with selectable defects (or, in Live mode, a gated read-only probe of one URL you type) against the MCP authorization expectations, with a sourced reference of what ChatGPT and other clients need.",
+      "url": "http://localhost:4901",
+      "healthPath": "/api/health",
+      "composeFile": "mcp-auth-conformance-LAB/docker-compose.yml",
+      "composeOverlays": [],
+      "notes": "Host-run: ./scripts/run.sh (port 4901). Docker: docker compose up --build -d (published on 127.0.0.1:4901 only; the Live probe stays loopback-only in the container). Mock is the default and needs no tenant or credentials."
+    }
+  ]
+}

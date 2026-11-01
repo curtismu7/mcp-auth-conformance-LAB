@@ -1,0 +1,461 @@
+{
+  "schema": "demo-content-pack/1",
+  "id": "mcp-auth-conformance-lab",
+  "title": "MCP Auth Conformance LAB",
+  "version": "0.1.0",
+  "demo": {
+    "id": "mcp-auth-conformance-lab",
+    "name": "MCP Auth Conformance LAB",
+    "catalog": "D35",
+    "baseUrl": "http://localhost:4901",
+    "doctor": "/api/health",
+    "tags": [
+      "mcp",
+      "authorization",
+      "d2",
+      "conformance",
+      "rfc-9728",
+      "pkce",
+      "cimd",
+      "mock",
+      "lab"
+    ]
+  },
+  "glossary": [
+    {
+      "id": "prm",
+      "term": "Protected resource metadata (RFC 9728)",
+      "definition": "A JSON document an MCP server publishes that names the server (resource) and the authorization servers that can issue tokens for it. Clients find it from the resource_metadata parameter of the 401 challenge or from a well-known URL.",
+      "aliases": [
+        "RFC 9728",
+        "oauth-protected-resource"
+      ]
+    },
+    {
+      "id": "www-authenticate",
+      "term": "WWW-Authenticate challenge",
+      "definition": "The header on a 401 or 403 that tells the client how to authenticate: Bearer followed by auth-params such as resource_metadata, scope and error."
+    },
+    {
+      "id": "pkce",
+      "term": "PKCE with S256",
+      "definition": "A one-time secret (code verifier) whose SHA-256 hash is sent with the authorization request, so a stolen authorization code is useless. MCP clients refuse servers whose metadata does not list S256.",
+      "aliases": [
+        "RFC 7636"
+      ]
+    },
+    {
+      "id": "resource-indicator",
+      "term": "Resource indicator (RFC 8707)",
+      "definition": "The resource parameter names the MCP server a token is for. The authorization server copies it into the token audience so the server can reject tokens meant for someone else.",
+      "aliases": [
+        "resource parameter",
+        "RFC 8707"
+      ]
+    },
+    {
+      "id": "iss",
+      "term": "Issuer identification (RFC 9207)",
+      "definition": "The authorization server adds iss=<its issuer> to every authorization response so the client can tell which server answered and detect mix-up attacks.",
+      "aliases": [
+        "RFC 9207",
+        "iss parameter"
+      ]
+    },
+    {
+      "id": "cimd",
+      "term": "Client ID Metadata Document (CIMD)",
+      "definition": "A client uses an https URL as its client_id; the URL serves a JSON document describing the client. The MCP page says servers and clients SHOULD support it. It is an Internet-Draft, so it can change.",
+      "aliases": [
+        "client id metadata document"
+      ]
+    },
+    {
+      "id": "dcr",
+      "term": "Dynamic client registration (RFC 7591)",
+      "definition": "A client registers itself at a registration_endpoint and gets a client_id. The MCP page keeps it for backwards compatibility (MAY).",
+      "aliases": [
+        "RFC 7591",
+        "DCR"
+      ]
+    },
+    {
+      "id": "insufficient-scope",
+      "term": "insufficient_scope (403)",
+      "definition": "The token is valid but lacks a scope. The server answers 403 with error=\"insufficient_scope\" and the scope needed, which lets the client step up instead of failing.",
+      "aliases": [
+        "step-up"
+      ]
+    },
+    {
+      "id": "wildcard-gateway",
+      "term": "Wildcard metadata gateway",
+      "definition": "A gateway that answers protected resource metadata for any path. A probe then proves the gateway is there, not the application behind it."
+    }
+  ],
+  "sources": [
+    {
+      "id": "mcp-auth",
+      "title": "MCP Authorization (2025-11-25)",
+      "url": "https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization",
+      "kind": "spec",
+      "use": "Whole page: RFC 9728 MUST, discovery order, scope in WWW-Authenticate SHOULD, PKCE and S256, resource parameter MUST (client side), audience validation MUST, 401/403, insufficient_scope 403 SHOULD, CI",
+      "status": "verified",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "mcp-auth-draft",
+      "title": "MCP Authorization (draft)",
+      "url": "https://modelcontextprotocol.io/specification/draft/basic/authorization",
+      "kind": "spec",
+      "use": "Only the standards list was read: it lists RFC 9207 (the 2025-11-25 page does not mention it). A draft can change.",
+      "status": "verified",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "rfc9728-3",
+      "title": "RFC 9728 section 3 (metadata request)",
+      "url": "https://www.rfc-editor.org/rfc/rfc9728.txt",
+      "kind": "standard",
+      "use": "Well-known URI construction and the resource value MUST be identical rule (section 3.3).",
+      "status": "verified",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "rfc9728-2",
+      "title": "RFC 9728 section 2 (metadata parameters)",
+      "url": "https://www.rfc-editor.org/rfc/rfc9728.txt",
+      "kind": "standard",
+      "use": "resource is REQUIRED; authorization_servers is OPTIONAL in the RFC (MCP makes it required).",
+      "status": "verified",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "rfc9728-3.3",
+      "title": "RFC 9728 section 3.3",
+      "url": "https://www.rfc-editor.org/rfc/rfc9728.txt",
+      "kind": "standard",
+      "use": "The returned resource MUST be identical to the resource the metadata was requested for, otherwise the data MUST NOT be used.",
+      "status": "verified",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "rfc9728-5.1",
+      "title": "RFC 9728 section 5.1 (WWW-Authenticate resource_metadata)",
+      "url": "https://www.rfc-editor.org/rfc/rfc9728.txt",
+      "kind": "standard",
+      "use": "The resource_metadata parameter carries the metadata URL and may be combined with other parameters.",
+      "status": "verified",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "rfc9728-7.1",
+      "title": "RFC 9728 section 7.1 (TLS requirements)",
+      "url": "https://www.rfc-editor.org/rfc/rfc9728.txt",
+      "kind": "standard",
+      "use": "Implementations MUST support TLS.",
+      "status": "verified",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "rfc8414-3.3",
+      "title": "RFC 8414 section 3.3 (metadata validation)",
+      "url": "https://www.rfc-editor.org/rfc/rfc8414.txt",
+      "kind": "standard",
+      "use": "The issuer value returned MUST be identical to the authorization server identifier used to build the metadata URL. code_challenge_methods_supported is OPTIONAL in the RFC (MCP requires it).",
+      "status": "verified",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "rfc8707-2",
+      "title": "RFC 8707 section 2 (resource parameter)",
+      "url": "https://www.rfc-editor.org/rfc/rfc8707.txt",
+      "kind": "standard",
+      "use": "The AS SHOULD audience-restrict issued tokens; for an unacceptable resource it should answer invalid_target; it MAY accept a request without resource.",
+      "status": "verified",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "rfc9207-2",
+      "title": "RFC 9207 sections 2 and 2.3 (iss parameter)",
+      "url": "https://www.rfc-editor.org/rfc/rfc9207.txt",
+      "kind": "standard",
+      "use": "A supporting AS MUST include iss in every authorization response (errors too), equal to its issuer, and MUST set authorization_response_iss_parameter_supported to true.",
+      "status": "verified",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "rfc7636-4.2",
+      "title": "RFC 7636 section 4.2 (code_challenge_method)",
+      "url": "https://www.rfc-editor.org/rfc/rfc7636.txt",
+      "kind": "standard",
+      "use": "A client capable of S256 MUST use S256. The RFC does not require a server to advertise methods (that is RFC 8414 plus the MCP page).",
+      "status": "verified",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "rfc6750-3",
+      "title": "RFC 6750 section 3 (WWW-Authenticate)",
+      "url": "https://www.rfc-editor.org/rfc/rfc6750.txt",
+      "kind": "standard",
+      "use": "A resource server MUST include WWW-Authenticate when no valid token is presented; the Bearer scheme MUST be followed by one or more auth-param values.",
+      "status": "verified",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "rfc9110-challenge",
+      "title": "RFC 9110 challenge grammar",
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.txt",
+      "kind": "standard",
+      "use": "Grammar line: challenge = auth-scheme [ 1*SP ( token68 / #auth-param ) ]. Only the grammar line was read.",
+      "status": "verified",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "rfc7591-iat",
+      "title": "RFC 7591 (initial access token)",
+      "url": "https://www.rfc-editor.org/rfc/rfc7591.txt",
+      "kind": "standard",
+      "use": "Definitions section: an initial access token is required when the AS limits the parties that can register; invalid_redirect_uri is a defined error. Rate limiting is not required by the RFC.",
+      "status": "verified",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "cimd-00",
+      "title": "OAuth Client ID Metadata Document, draft 00",
+      "url": "https://www.ietf.org/archive/id/draft-ietf-oauth-client-id-metadata-document-00.txt",
+      "kind": "reference",
+      "use": "Client identifier URLs MUST be https with a path; the document client_id MUST match its URL; the AS SHOULD fetch and SHOULD respect HTTP cache headers. An Internet-Draft: it can change.",
+      "status": "verified",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "openai-auth",
+      "title": "OpenAI Apps SDK: Authentication",
+      "url": "https://developers.openai.com/apps-sdk/build/auth",
+      "kind": "reference",
+      "use": "Whole page: ChatGPT requires PRM, AS metadata, S256 in code_challenge_methods_supported, echoes resource on authorize and token requests, prefers CIMD, supports DCR, uses RFC 9207 iss to pick a stable",
+      "status": "verified",
+      "checked": "2026-10-21"
+    }
+  ],
+  "cards": [
+    {
+      "id": "try-good",
+      "label": "A server done right",
+      "description": "Score a conforming mock at 100%.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-S01"
+      },
+      "terms": [
+        "prm",
+        "pkce"
+      ],
+      "story": "S01"
+    },
+    {
+      "id": "try-defects",
+      "label": "Break it ten ways",
+      "description": "Each defect fails exactly its own checks.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-S02"
+      },
+      "terms": [
+        "www-authenticate",
+        "resource-indicator",
+        "iss"
+      ],
+      "story": "S02"
+    },
+    {
+      "id": "try-wildcard",
+      "label": "The wildcard gateway",
+      "description": "Metadata for any path: a warning, not proof.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-S13"
+      },
+      "terms": [
+        "wildcard-gateway",
+        "prm"
+      ],
+      "story": "S13"
+    },
+    {
+      "id": "try-cimd",
+      "label": "DCR versus CIMD",
+      "description": "What each registration path needs.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-S14"
+      },
+      "terms": [
+        "cimd",
+        "dcr"
+      ],
+      "story": "S14"
+    },
+    {
+      "id": "try-stepup",
+      "label": "Step-up after a 403",
+      "description": "insufficient_scope to a second authorization.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-S15"
+      },
+      "terms": [
+        "insufficient-scope"
+      ],
+      "story": "S15"
+    },
+    {
+      "id": "concept-clients",
+      "label": "What ChatGPT and Claude need",
+      "description": "A sourced reference; unverified lines are labelled.",
+      "group": "concept",
+      "action": {
+        "type": "route",
+        "href": "/#clients"
+      },
+      "terms": [
+        "cimd",
+        "dcr",
+        "pkce"
+      ]
+    },
+    {
+      "id": "ref-doctor",
+      "label": "Doctor and health",
+      "description": "Preflight checks and the demo-health/1 endpoint.",
+      "group": "setup",
+      "action": {
+        "type": "route",
+        "href": "/api/health"
+      }
+    }
+  ],
+  "stories": [
+    {
+      "id": "S01",
+      "title": "An MCP server done right scores 100%",
+      "say": "A target that follows the MCP authorization page passes every MUST and SHOULD the lab can test."
+    },
+    {
+      "id": "S02",
+      "title": "The server: no protected resource metadata",
+      "say": "Without RFC 9728 metadata a client cannot find the authorization server. The MCP page makes this a MUST."
+    },
+    {
+      "id": "S03",
+      "title": "The server: empty first parameter in WWW-Authenticate",
+      "say": "One stray comma is invalid auth-param syntax. Which real clients choke on it is UNVERIFIED."
+    },
+    {
+      "id": "S04",
+      "title": "The server: plain-http metadata URL",
+      "say": "Metadata that can be rewritten in transit lets an attacker choose the authorization server."
+    },
+    {
+      "id": "S05",
+      "title": "The server: S256 not advertised",
+      "say": "MCP clients must refuse to proceed without S256 advertised; ChatGPT says such servers are unsupported."
+    },
+    {
+      "id": "S06",
+      "title": "The server: resource parameter ignored",
+      "say": "Tokens must be bound to the MCP server they were requested for (RFC 8707)."
+    },
+    {
+      "id": "S07",
+      "title": "The server: no issuer identification",
+      "say": "RFC 9207 closes the authorization server mix-up gap; ChatGPT ties its stable redirect URI to it."
+    },
+    {
+      "id": "S08",
+      "title": "The server: wrong shape for insufficient scope",
+      "say": "Without error=insufficient_scope and the needed scope, a client cannot step up."
+    },
+    {
+      "id": "S09",
+      "title": "The server: open dynamic registration",
+      "say": "Open DCR should validate redirect URIs and be gated or throttled. Throttling is a lab heuristic (UNVERIFIED as a requirement)."
+    },
+    {
+      "id": "S10",
+      "title": "The server: no CIMD support",
+      "say": "CIMD is the MCP page's default for clients with no prior relationship (SHOULD)."
+    },
+    {
+      "id": "S11",
+      "title": "The server: stale metadata",
+      "say": "A lab heuristic (UNVERIFIED as a requirement): stale metadata strands clients on dead endpoints."
+    },
+    {
+      "id": "S12",
+      "title": "The server: audience not validated",
+      "say": "The MCP page makes audience validation a MUST: otherwise tokens can be passed through."
+    },
+    {
+      "id": "S13",
+      "title": "A gateway that answers metadata for any path",
+      "say": "A gateway can answer RFC 9728 metadata for any path, so a probe proves the gateway, not the app behind it."
+    },
+    {
+      "id": "S20",
+      "title": "The server: no challenge at all",
+      "say": "Authorization is optional in MCP, but a server that claims to be protected must challenge."
+    },
+    {
+      "id": "S21",
+      "title": "The server: 401 without a scope hint",
+      "say": "The MCP page says servers SHOULD put scope in the challenge so clients ask for least privilege."
+    },
+    {
+      "id": "S22",
+      "title": "The server: metadata names another resource",
+      "say": "A mismatched resource value is how one server could pose as another."
+    },
+    {
+      "id": "S23",
+      "title": "The server: authorization server issuer mismatch",
+      "say": "RFC 8414 section 3.3: the issuer must be identical, character for character."
+    },
+    {
+      "id": "S14",
+      "title": "DCR versus CIMD: what each server offers",
+      "say": "Per the MCP page CIMD is preferred, DCR is the backwards-compatible fallback, and pre-registration is a third path."
+    },
+    {
+      "id": "S15",
+      "title": "401, then 403 insufficient_scope, then step-up",
+      "say": "The 403 challenge is the step-up instruction. With the wrong-shape 403 the client is stuck."
+    },
+    {
+      "id": "S16",
+      "title": "Step-up fails when the 403 has the wrong shape",
+      "say": "That is why the lab scores the 403 shape."
+    },
+    {
+      "id": "S17",
+      "title": "Probe mode against a local mock only",
+      "say": "Probe mode is read-only and limited to the one URL typed."
+    },
+    {
+      "id": "S18",
+      "title": "Probe refuses private addresses and unsafe targets",
+      "say": "The probe is a guarded client, not a way into the network behind the SE's laptop."
+    },
+    {
+      "id": "S19",
+      "title": "Probe never follows a redirect to another origin",
+      "say": "The allowlist is the origin typed, and redirects do not widen it."
+    }
+  ]
+}

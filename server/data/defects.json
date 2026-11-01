@@ -1,0 +1,138 @@
+[
+  {
+    "id": "open_server",
+    "title": "No challenge: the server answers 200 without a token",
+    "describes": "A token-less request is accepted, so there is no 401 and no WWW-Authenticate to discover from.",
+    "fails": [
+      "challenge_401"
+    ]
+  },
+  {
+    "id": "missing_prm",
+    "title": "No protected resource metadata",
+    "describes": "The well-known metadata URL answers 404 (the 401 challenge still points at it).",
+    "fails": [
+      "prm_present"
+    ]
+  },
+  {
+    "id": "prm_resource_mismatch",
+    "title": "Metadata names a different resource",
+    "describes": "The protected resource metadata resource value is not the MCP endpoint URL it was fetched for.",
+    "fails": [
+      "prm_valid"
+    ]
+  },
+  {
+    "id": "as_issuer_mismatch",
+    "title": "Authorization server issuer mismatch",
+    "describes": "The authorization server metadata issuer carries a trailing slash that the protected resource metadata does not (not identical, RFC 8414 section 3.3).",
+    "fails": [
+      "as_metadata"
+    ]
+  },
+  {
+    "id": "bad_www_authenticate",
+    "title": "Empty first auth-param in WWW-Authenticate",
+    "describes": "The challenge is 'Bearer , resource_metadata=...' with a comma straight after the scheme.",
+    "fails": [
+      "challenge_shape"
+    ]
+  },
+  {
+    "id": "http_metadata_url",
+    "title": "resource_metadata uses http",
+    "describes": "The 401 challenge advertises a plain-http metadata URL.",
+    "fails": [
+      "challenge_resource_metadata"
+    ]
+  },
+  {
+    "id": "no_scope_hint",
+    "title": "No scope hint in the 401 challenge",
+    "describes": "The 401 challenge has resource_metadata but no scope parameter.",
+    "fails": [
+      "challenge_scope"
+    ]
+  },
+  {
+    "id": "no_pkce_s256",
+    "title": "PKCE S256 not advertised",
+    "describes": "code_challenge_methods_supported lists only plain.",
+    "fails": [
+      "pkce_s256"
+    ]
+  },
+  {
+    "id": "resource_ignored",
+    "title": "resource parameter ignored",
+    "describes": "Tokens get a default audience and an unknown resource is accepted.",
+    "fails": [
+      "resource_param"
+    ]
+  },
+  {
+    "id": "no_iss",
+    "title": "No iss in authorization responses",
+    "describes": "Issuer identification is neither advertised nor returned.",
+    "fails": [
+      "iss"
+    ]
+  },
+  {
+    "id": "wrong_403",
+    "title": "Wrong 403 shape",
+    "describes": "Insufficient scope answers a bare 403 with no error or scope in the challenge.",
+    "fails": [
+      "insufficient_scope_403"
+    ]
+  },
+  {
+    "id": "dcr_open",
+    "title": "Open dynamic registration without limits",
+    "describes": "Anonymous registration accepts any redirect URI and is never throttled.",
+    "fails": [
+      "dcr_abuse_protection"
+    ]
+  },
+  {
+    "id": "cimd_unsupported",
+    "title": "CIMD not supported",
+    "describes": "client_id_metadata_document_supported is absent; DCR remains.",
+    "fails": [
+      "registration_cimd"
+    ]
+  },
+  {
+    "id": "metadata_stale",
+    "title": "Stale metadata",
+    "describes": "Metadata is cacheable for a year and advertises an authorization endpoint that now answers 404.",
+    "fails": [
+      "metadata_fresh"
+    ]
+  },
+  {
+    "id": "audience_unchecked",
+    "title": "Audience not validated",
+    "describes": "The MCP endpoint accepts a token minted for another resource.",
+    "fails": [
+      "audience_validation"
+    ]
+  },
+  {
+    "id": "wildcard_gateway",
+    "title": "Gateway answers metadata for any path",
+    "describes": "Protected resource metadata is returned for paths that do not exist.",
+    "fails": [],
+    "warns": [
+      "prm_path_specificity"
+    ]
+  },
+  {
+    "id": "dcr_absent",
+    "title": "No dynamic registration (CIMD only)",
+    "describes": "registration_endpoint is not published. Not a defect: shown in the DCR versus CIMD comparison.",
+    "fails": [],
+    "warns": []
+  }
+]

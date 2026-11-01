@@ -1,0 +1,36 @@
+{
+  "schema": "diagram-studio/1",
+  "id": "mcp-authorization-flow",
+  "title": "The MCP authorization flow",
+  "lede": "A client calls an MCP server with no token, reads the 401 challenge, follows it to the protected resource metadata and the authorization server metadata, runs authorization code with PKCE, and meets the scope check. Simulated: the targets are in-process mock servers.",
+  "groups": {
+    "client": { "label": "MCP client", "color": "dark" },
+    "server": { "label": "MCP server", "color": "red" },
+    "discovery": { "label": "Discovery documents", "color": "blue" },
+    "authz": { "label": "Authorization server", "color": "grey" }
+  },
+  "nodes": [
+    { "id": "client", "label": "1 MCP client", "group": "client", "x": 0, "y": 0, "sub": ["Calls the MCP endpoint with no token."] },
+    { "id": "rs", "label": "2 MCP server", "group": "server", "x": 380, "y": 0, "sub": ["Answers 401 with a Bearer challenge: resource_metadata and scope."] },
+    { "id": "prm", "label": "3 Protected resource metadata", "group": "discovery", "x": 760, "y": 0, "sub": ["RFC 9728: resource and authorization_servers."] },
+    { "id": "asm", "label": "4 Auth server metadata", "group": "authz", "x": 1140, "y": 0, "sub": ["RFC 8414 or OIDC discovery: endpoints, S256, iss support."] },
+    { "id": "authz", "label": "5 Authorize + token", "group": "authz", "x": 1140, "y": 220, "sub": ["PKCE S256, resource (RFC 8707), iss (RFC 9207)."] },
+    { "id": "scope", "label": "6 Scope check", "group": "server", "x": 380, "y": 220, "sub": ["Token with enough scope: 200. Too little: 403 insufficient_scope."] }
+  ],
+  "edges": [
+    { "source": "client", "target": "rs", "label": "no token" },
+    { "source": "rs", "target": "prm", "label": "resource_metadata" },
+    { "source": "prm", "target": "asm", "label": "authorization_servers" },
+    { "source": "asm", "target": "authz", "label": "endpoints" },
+    { "source": "authz", "target": "scope", "label": "Bearer token" },
+    { "source": "scope", "target": "rs", "label": "200 or 403" }
+  ],
+  "steps": [
+    { "title": "No token, 401", "what": "The client calls the MCP endpoint with no token. The server answers 401 and the challenge points at its metadata.", "hop": "401", "edges": [0] },
+    { "title": "Protected resource metadata", "what": "The client fetches protected resource metadata and learns the authorization server.", "hop": "200", "edges": [1] },
+    { "title": "Authorization server metadata", "what": "It reads the authorization server metadata: endpoints, S256 and iss support.", "hop": "200", "edges": [2] },
+    { "title": "Authorize and token", "what": "It runs authorization code with PKCE S256, the resource parameter and the iss check.", "hop": "200", "edges": [3] },
+    { "title": "Read token, write tool: 403", "what": "A read token calls a write tool: 403 insufficient_scope names the scope to step up to.", "hop": "403", "edges": [4] },
+    { "title": "After step-up", "what": "After step-up the call is allowed.", "hop": "200", "edges": [4] }
+  ]
+}

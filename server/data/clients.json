@@ -1,0 +1,29 @@
+{
+  "asOf": "2026-10-21",
+  "note": "What real MCP clients need in order to connect. Every line says where it came from. Lines without a verified source are marked UNVERIFIED and are not claims about the product.",
+  "clients": [
+    { "id": "spec", "name": "Any MCP client (per the MCP authorization page, 2025-11-25)", "verified": true, "source": "mcp-auth",
+      "requirements": [
+        { "id": "prm", "level": "MUST", "text": "Use OAuth protected resource metadata (RFC 9728) for authorization server discovery; use resource_metadata from WWW-Authenticate when present, else the well-known URIs." },
+        { "id": "as-metadata", "level": "MUST", "text": "Support both RFC 8414 and OpenID Connect discovery and try the well-known endpoints in the specified priority order." },
+        { "id": "pkce", "level": "MUST", "text": "Implement PKCE, verify code_challenge_methods_supported in the metadata (refuse if absent) and use S256 when capable." },
+        { "id": "resource", "level": "MUST", "text": "Send the resource parameter (RFC 8707) on both authorization and token requests, whether or not the server supports it." },
+        { "id": "registration", "level": "SHOULD", "text": "Registration order: pre-registered client, then Client ID Metadata Document if client_id_metadata_document_supported, then Dynamic Client Registration if registration_endpoint, else prompt the user." },
+        { "id": "step-up", "level": "SHOULD", "text": "Handle 403 insufficient_scope by re-authorizing with the scope the server names." } ] },
+    { "id": "chatgpt", "name": "ChatGPT (and Codex), per OpenAI's Apps SDK authentication guide", "verified": true, "source": "openai-auth",
+      "requirements": [
+        { "id": "prm", "level": "required", "text": "Host protected resource metadata on the MCP server (well-known URL, or the same URL in WWW-Authenticate on 401)." },
+        { "id": "as-metadata", "level": "required", "text": "Publish OAuth 2.0 or OpenID Connect discovery metadata from the authorization server; the issuer must equal the value in authorization_servers." },
+        { "id": "pkce", "level": "required", "text": "code_challenge_methods_supported must include S256; servers that omit it are unsupported." },
+        { "id": "resource", "level": "expected", "text": "ChatGPT appends resource to the authorization and token requests; copy it into the token audience." },
+        { "id": "registration", "level": "choice", "text": "CIMD, DCR or a predefined OAuth client. ChatGPT prioritizes CIMD when advertised; the plugin builder can choose DCR when both exist." },
+        { "id": "iss", "level": "recommended", "text": "With authorization_response_iss_parameter_supported true and iss on every authorization response (errors too), ChatGPT uses its stable redirect URI; otherwise a callback-ID-specific one. If iss is advertised but missing or mismatched, the response is rejected." },
+        { "id": "scopes", "level": "note", "text": "OIDC scopes advertised in scopes_supported are requested by default; make sure each advertised scope is enabled for the client." } ] },
+    { "id": "claude", "name": "Claude (custom connectors)", "verified": false, "source": "claude-connectors",
+      "requirements": [
+        { "id": "unknown", "level": "UNVERIFIED", "text": "Claude's own connector requirements could not be fetched (the help-center page renders in JavaScript). Nothing specific is claimed. Treat the generic MCP client lines above as the working assumption and confirm against Anthropic's current documentation before telling a customer." } ] },
+    { "id": "others", "name": "Other clients (LibreChat, LM Studio, IDE hosts)", "verified": false, "source": "claude-connectors",
+      "requirements": [
+        { "id": "unknown", "level": "UNVERIFIED", "text": "Not researched. The lab scores against the MCP page, which every conforming client is expected to follow; client-specific quirks are UNVERIFIED." } ] }
+  ]
+}

@@ -1,0 +1,25 @@
+# OrbStack:  docker compose up --build -d   ->  http://127.0.0.1:4901
+# The server binds 0.0.0.0 INSIDE the container (CONFLAB_BIND is the opt-in), but the port is published on loopback only.
+# Do not change the 127.0.0.1 below. HOST_PORT must stay in 4900-4949. Pinned by scripts/compose.test.mjs.
+# The probe's external mode (CONFLAB_PROBE_EXTERNAL) is deliberately NOT set here: in Docker the Live probe can only reach loopback.
+name: mcp-auth-conformance-lab
+
+services:
+  mcp-auth-conformance-lab:
+    build: .
+    ports:
+      - "127.0.0.1:${HOST_PORT:-4901}:4901"
+    environment:
+      CONFLAB_PORT: "4901"
+      CONFLAB_HOST: 0.0.0.0
+      CONFLAB_BIND: "1"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4901/api/health').then(r=>r.json()).then(j=>process.exit(j.schema==='demo-health/1'&&j.state==='ready'?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      start_period: 5s
+      start_interval: 2s
+      timeout: 5s
+      retries: 3

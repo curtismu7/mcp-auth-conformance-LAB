@@ -1,0 +1,29 @@
+{
+  "name": "mcp-auth-conformance-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP authorization conformance lab: score a mock MCP server (with selectable defects) or, in a gated read-only Live probe, one URL you type, against the MCP authorization expectations. Mock-first: no tenant, no outbound network by default.",
+  "license": "MIT",
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "start": "npm start -w server",
+    "build": "npm run build -w web",
+    "test": "npm test -w server && npm test -w web && node --test scripts/*.test.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "reset": "node scripts/reset.mjs",
+    "mock": "node scripts/mock.mjs",
+    "talk-track": "node scripts/build-talk-track.mjs",
+    "content-pack": "node scripts/build-content-pack.mjs && node scripts/validate-content-pack.mjs",
+    "prepare": "git config core.hooksPath .githooks || true"
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0"
+  }
+}

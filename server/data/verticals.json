@@ -1,0 +1,5 @@
+[
+  { "id": "banking", "name": "Banking", "cast": { "org": "Harbor Credit", "server": "Harbor accounts MCP server", "sibling": "Harbor cards MCP server", "readScope": "accounts:read", "writeScope": "payments:write", "readTool": "list_accounts", "writeTool": "send_payment", "client": "Concierge Assistant" } },
+  { "id": "travel", "name": "Travel", "cast": { "org": "Skyline Air", "server": "Skyline bookings MCP server", "sibling": "Skyline loyalty MCP server", "readScope": "trips:read", "writeScope": "trips:book", "readTool": "list_trips", "writeTool": "book_trip", "client": "Travel Assistant" } },
+  { "id": "retail", "name": "Retail", "cast": { "org": "Fieldstone Goods", "server": "Fieldstone orders MCP server", "sibling": "Fieldstone returns MCP server", "readScope": "orders:read", "writeScope": "orders:refund", "readTool": "list_orders", "writeTool": "refund_order", "client": "Shopping Assistant" } }
+]
