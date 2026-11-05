@@ -85,7 +85,7 @@ test('CLAUDE.md exists and the README has the title, the plain Tier, Repo and Ca
   const r = text('README.md');
   assert.match(r, /^# MCP Auth Conformance LAB$/m);
   assert.match(r, /^Tier: Tester$/m);
-  assert.match(r, /^Repo: https:\/\/github\.com\/ping-sandbox\/mcp-auth-conformance-LAB$/m);
+  assert.match(r, /^Repo: https:\/\/github.com/curtismu7\/mcp-auth-conformance-LAB$/m);
   assert.match(r, /^Catalog: D35\+D2$/m);
   const heads = [...r.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
   const order = ['What is simulated', 'Run from a clone', 'Settings file', 'Ports, and what to do if the port is taken', 'Mock and live modes', 'Health, doctor and reset', 'Docker (optional)', 'Tests', 'Troubleshooting', 'Ownership'];
