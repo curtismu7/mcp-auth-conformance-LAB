@@ -3,7 +3,7 @@
 Point it at an MCP server and get a **scorecard**: does it follow the MCP authorization expectations? Each check says what was seen (evidence), whether the rule is a MUST or a SHOULD, how severe a failure is, how to fix it, and which spec clause it comes from. A second part is a **sourced reference of what ChatGPT and other MCP clients need** to connect (discovery, DCR or CIMD, PKCE), with every line marked verified or UNVERIFIED.
 
 Tier: Tester
-Repo: https://github.com/ping-sandbox/mcp-auth-conformance-LAB
+Repo: https://github.com/curtismu7/mcp-auth-conformance-LAB
 Catalog: D35+D2
 
 Catalog ids D35 (MCP authorization conformance scorecard) and D2 (MCP auth lab) are carried over from the earlier repo, which built them as one app. They come from the family board, not from a catalog table checked in this repo; treat them as carried over until the owner confirms them. The Learning Hub pack schema takes a single id, so `content-pack.json` carries `D35`.
@@ -19,7 +19,7 @@ Catalog ids D35 (MCP authorization conformance scorecard) and D2 (MCP auth lab) 
 Prerequisites: Node 26 or newer. Docker only if you use the Docker form.
 
 ```
-git clone https://github.com/ping-sandbox/mcp-auth-conformance-LAB.git
+git clone https://github.com/curtismu7/mcp-auth-conformance-LAB.git
 cd mcp-auth-conformance-LAB
 npm ci
 npm run build
