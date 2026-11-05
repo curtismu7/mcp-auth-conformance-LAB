@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ShelfLink from "./components/ShelfLink.jsx";
 import { getCatalog, getDiagram, resetServer } from "./lib/api.js";
 import { boxesFromDiagram } from "./lib/diagram.js";
 import { fill } from "./lib/fill.js";
@@ -112,6 +113,7 @@ function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, se
       <header className="top">
         <h1><span className="mark" aria-hidden="true">AUTH</span> MCP Auth Conformance LAB</h1>
         <div className="tools-right">
+            <ShelfLink />
           <div className="seg" role="group" aria-label="Mode">
             <button type="button" aria-pressed={mode === "mock"} onClick={() => setMode("mock")} data-testid="mode-mock">Mock</button>
             <button type="button" aria-pressed={mode === "live"} onClick={() => setMode("live")} data-testid="mode-live">Live</button>
