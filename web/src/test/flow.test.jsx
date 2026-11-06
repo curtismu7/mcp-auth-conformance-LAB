@@ -106,6 +106,9 @@ describe("shell", () => {
     await userEvent.selectOptions(screen.getByTestId("theme"), "dark");
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(localStorage.getItem("conflab.theme")).toBe("dark");
+    await userEvent.selectOptions(screen.getByTestId("theme"), "auto");
+    expect(document.documentElement.dataset.theme).toBeUndefined();
+    expect(localStorage.getItem("conflab.theme")).toBeNull();
   });
   it("persona picker changes the cast in the story text", async () => {
     await open("Stories");

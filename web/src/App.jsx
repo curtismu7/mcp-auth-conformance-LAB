@@ -22,7 +22,7 @@ export default function App() {
   const [catalog, setCatalog] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [tab, setTab] = useState(tabFromHash);
-  const [theme, setTheme] = useState(() => (["light", "dark"].includes(read("conflab.theme", "")) ? read("conflab.theme", "") : "system"));
+  const [theme, setTheme] = useState(() => (["light", "dark"].includes(read("conflab.theme", "")) ? read("conflab.theme", "") : "auto"));
   const [present, setPresent] = useState(() => read("conflab.present", "0") === "1");
   const [mode, setModeState] = useState(() => (read("conflab.mode", "mock") === "live" ? "live" : "mock"));
 
@@ -31,7 +31,7 @@ export default function App() {
 
   useEffect(() => { getCatalog().then(setCatalog).catch((e) => setLoadError(e.message)); }, []);
   useEffect(() => { const on = () => setTab(tabFromHash()); window.addEventListener("hashchange", on); return () => window.removeEventListener("hashchange", on); }, []);
-  useEffect(() => { if (theme === "system") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = theme; }, [theme]);
+  useEffect(() => { if (theme === "auto") { try { localStorage.removeItem("conflab.theme"); } catch { /* not remembered */ } delete document.documentElement.dataset.theme; } else { try { localStorage.setItem("conflab.theme", theme); } catch { /* not remembered */ } document.documentElement.dataset.theme = theme; } }, [theme]);
   useEffect(() => { if (present) document.documentElement.dataset.present = "1"; else delete document.documentElement.dataset.present; }, [present]);
   useEffect(() => { document.documentElement.dataset.mode = mode; }, [mode]);
 
@@ -93,7 +93,7 @@ function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, se
     } catch (e) { setResetNote(`Reset failed: ${e.message}`); }
   }, [resetBoxes]);
 
-  const setThemePersist = (t) => { setTheme(t); try { localStorage.setItem("conflab.theme", t); } catch { /* not remembered */ } };
+  const setThemePersist = (t) => { setTheme(t); };
   const go = (id) => { window.location.hash = `#/${id}`; };
   const onTabKey = (e) => {
     const focused = TABS.findIndex(([id]) => tabRefs.current[id] === document.activeElement);
@@ -128,7 +128,7 @@ function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, se
           <button type="button" aria-pressed={present} onClick={togglePresent} title="Presenter mode: P to turn on, Esc to leave">Present</button>
           <label className="inline">Theme
             <select value={theme} onChange={(e) => setThemePersist(e.target.value)} data-testid="theme">
-              <option value="system">Auto</option>
+              <option value="auto">Auto</option>
               <option value="light">Light</option>
               <option value="dark">Dark</option>
             </select>
