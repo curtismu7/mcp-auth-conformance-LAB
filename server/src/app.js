@@ -28,6 +28,10 @@ export async function createApp({ env = process.env, clock } = {}) {
   const health = createHealth();
   const allowExternal = env.CONFLAB_PROBE_EXTERNAL === '1';
   let last = null; let probing = false;
+  // Rule 19: the mode is server-side and runtime-switchable (POST /api/mode). Live is always available here:
+  // the probe is loopback-only by default and needs no live tenant, so there is no 409 path.
+  let mode = 'mock';
+  const modeView = () => ({ mode, source: mode === 'mock' ? 'mock' : 'real', realAvailable: true, realReason: null });
 
   app.disable('x-powered-by');
   app.use(hostCheck);
@@ -48,6 +52,14 @@ export async function createApp({ env = process.env, clock } = {}) {
     res.json(d);
   });
   app.get('/api/clients', (req, res) => res.json(publicClients()));
+  app.get('/api/info', (req, res) => res.json(modeView()));
+  app.post('/api/mode', (req, res) => {
+    const body = req.body || {};
+    if (typeof body !== 'object' || Array.isArray(body) || Object.keys(body).some((k) => k !== 'source')) return bad(res, 'the only accepted body field is { "source": "mock" | "real" }.');
+    if (body.source !== 'mock' && body.source !== 'real') return bad(res, 'source must be "mock" or "real".');
+    mode = body.source === 'real' ? 'live' : 'mock';
+    res.json(modeView());
+  });
   app.get('/api/scenarios/:id', (req, res) => {
     const s = SCENARIOS.find((x) => x.id === req.params.id || x.slug === req.params.id); const v = getVertical(String(req.query.vertical || 'banking'));
     if (!s || !v) return res.status(404).json({ error: 'not_found' });

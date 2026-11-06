@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ShelfLink from "./components/ShelfLink.jsx";
-import { getCatalog, getDiagram, resetServer } from "./lib/api.js";
+import { getCatalog, getDiagram, getInfo, resetServer, setMode as setModeRequest } from "./lib/api.js";
 import { boxesFromDiagram } from "./lib/diagram.js";
 import { fill } from "./lib/fill.js";
 import ScorecardTab from "./tabs/ScorecardTab.jsx";
@@ -26,10 +26,20 @@ export default function App() {
   const [present, setPresent] = useState(() => read("conflab.present", "0") === "1");
   const [mode, setModeState] = useState(() => (read("conflab.mode", "mock") === "live" ? "live" : "mock"));
 
-  const setMode = useCallback((m) => { setModeState(m); write("conflab.mode", m); }, []);
+  // Rule 19: the toggle asks the server (server-side mode), then reloads the catalog so the banner follows.
+  // Rule 19: the toggle asks the server (server-side mode), then reloads the catalog so the banner follows.
+  const setMode = useCallback((m) => {
+    setModeRequest(m === "live" ? "real" : "mock").then((v) => {
+      const next = v?.mode === "live" ? "live" : "mock";
+      setModeState(next);
+      write("conflab.mode", next);
+      getCatalog().then(setCatalog).catch(() => {});
+    }).catch(() => {});
+  }, []);
   const togglePresent = useCallback(() => setPresent((p) => { write("conflab.present", p ? "0" : "1"); return !p; }), []);
 
   useEffect(() => { getCatalog().then(setCatalog).catch((e) => setLoadError(e.message)); }, []);
+  useEffect(() => { getInfo().then((i) => setModeState((m) => i?.mode === "live" ? "live" : i?.mode === "mock" ? "mock" : m)).catch(() => {}); }, []);
   useEffect(() => { const on = () => setTab(tabFromHash()); window.addEventListener("hashchange", on); return () => window.removeEventListener("hashchange", on); }, []);
   useEffect(() => { if (theme === "auto") { try { localStorage.removeItem("conflab.theme"); } catch { /* not remembered */ } delete document.documentElement.dataset.theme; } else { try { localStorage.setItem("conflab.theme", theme); } catch { /* not remembered */ } document.documentElement.dataset.theme = theme; } }, [theme]);
   useEffect(() => { if (present) document.documentElement.dataset.present = "1"; else delete document.documentElement.dataset.present; }, [present]);
@@ -116,7 +126,7 @@ function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, se
             <ShelfLink />
           <div className="seg" role="group" aria-label="Mode">
             <button type="button" aria-pressed={mode === "mock"} onClick={() => setMode("mock")} data-testid="mode-mock">Mock</button>
-            <button type="button" aria-pressed={mode === "live"} onClick={() => setMode("live")} data-testid="mode-live">Live</button>
+            <button type="button" aria-pressed={mode === "live"} onClick={() => setMode("live")} data-testid="mode-real">Real</button>
           </div>
           <span className="mode-chip" data-testid="mode">Mode: {mode}{mode === "live" ? " (Probe tab)" : " (simulated)"}</span>
           <label className="inline">Persona

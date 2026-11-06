@@ -31,8 +31,8 @@ export default function ProbeTab({ app }) {
       <h2>Probe one URL (read only)</h2>
       {!live && (
         <p className="note" id="probe-mock-note" role="status" data-testid="probe-mock-note">
-          The probe is the Live side of this lab, and the header is on Mock, so nothing can be sent. Switch to Live to use it.{" "}
-          <button type="button" onClick={() => setMode("live")}>Switch to Live</button>
+          The probe is the Live side of this lab, and the header is on Mock, so nothing can be sent. Switch to Real to use it.{" "}
+          <button type="button" onClick={() => setMode("live")}>Switch to Real</button>
         </p>
       )}
       <p className="note" data-testid="probe-mode-note">{p.externalEnabled ? "External probing is ON for this run: the lab will contact the one https URL you type." : "External probing is OFF: only loopback targets (127.0.0.1, localhost, [::1]) are accepted. The lab never contacts the open internet."}</p>

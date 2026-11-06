@@ -9,7 +9,7 @@ import { startMockServer } from "../../../server/src/mock-http.js";
 let live;
 beforeAll(async () => { live = await startLive(); });
 afterAll(async () => { await live.stop(); });
-beforeEach(() => { window.location.hash = "#/scorecard"; document.documentElement.removeAttribute("data-present"); document.documentElement.removeAttribute("data-theme"); try { localStorage.clear(); } catch { /* none */ } });
+beforeEach(async () => { window.location.hash = "#/scorecard"; document.documentElement.removeAttribute("data-present"); document.documentElement.removeAttribute("data-theme"); try { localStorage.clear(); } catch { /* none */ } if (live) await fetch("/api/mode", { method: "POST", headers: { "content-type": "application/json" }, body: '{"source":"mock"}' }); });
 afterEach(cleanup);
 
 const open = async (tab) => {
@@ -17,7 +17,7 @@ const open = async (tab) => {
   await screen.findByRole("tablist");
   if (tab) { await userEvent.click(screen.getByRole("tab", { name: tab })); await waitFor(() => expect(screen.getByRole("tab", { name: tab })).toHaveAttribute("aria-selected", "true")); }
 };
-const goLive = async () => { await userEvent.click(screen.getByTestId("mode-live")); await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "live")); };
+const goLive = async () => { await userEvent.click(screen.getByTestId("mode-real")); await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "live")); };
 const status = (id) => within(screen.getByTestId(`check-${id}`)).getAllByText(/^(PASS|FAIL|WARN|NOT TESTED|INFO)$/)[0].textContent;
 
 describe("shell", () => {
@@ -39,7 +39,7 @@ describe("shell", () => {
     expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "mock");
     for (const t of ["Scorecard", "Stories", "Probe", "Clients", "Diagram", "Raw"]) {
       await userEvent.click(screen.getByRole("tab", { name: t }));
-      expect(screen.getByTestId("mode-mock")).toBeVisible(); expect(screen.getByTestId("mode-live")).toBeVisible();
+      expect(screen.getByTestId("mode-mock")).toBeVisible(); expect(screen.getByTestId("mode-real")).toBeVisible();
     }
     await goLive();
     expect(screen.getByTestId("mode")).toHaveTextContent("Mode: live");
@@ -53,16 +53,19 @@ describe("shell", () => {
     await userEvent.click(screen.getByRole("tab", { name: "Probe" }));
     expect(screen.queryByTestId("live-note")).toBeNull();
     await userEvent.click(screen.getByTestId("mode-mock"));
-    expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "mock");
+    await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "mock"));
   });
-  it("opens in the mode it remembers, and a bad stored value falls back to Mock", async () => {
-    localStorage.setItem("conflab.mode", "live");
+  it("opens in the mode the server answers, and a bad stored value falls back to it", async () => {
+    // Rule 19: the mode is server-side, so the server's /api/info answer wins over anything stored.
+    localStorage.setItem("conflab.mode", "mock");
+    await fetch("/api/mode", { method: "POST", headers: { "content-type": "application/json" }, body: '{"source":"real"}' });
     render(<App />); await screen.findByRole("tablist");
-    expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "live");
+    await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "live"));
     cleanup();
     localStorage.setItem("conflab.mode", "<script>");
+    await fetch("/api/mode", { method: "POST", headers: { "content-type": "application/json" }, body: '{"source":"mock"}' });
     render(<App />); await screen.findByRole("tablist");
-    expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "mock");
+    await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "mock"));
   });
   it("presenter mode: P toggles, Esc leaves, the banner stays, and modifier keys or typing in a field are ignored", async () => {
     await open();
@@ -235,8 +238,8 @@ describe("probe", () => {
     expect(btn).toHaveAttribute("aria-disabled", "true");
     await userEvent.click(btn);
     expect(fetchSpy.mock.calls.some(([u]) => String(u).endsWith("/api/probe"))).toBe(false);
-    await userEvent.click(screen.getByRole("button", { name: "Switch to Live" }));
-    expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "live");
+    await userEvent.click(screen.getByRole("button", { name: "Switch to Real" }));
+    await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "live"));
     expect(screen.queryByTestId("probe-mock-note")).toBeNull();
     expect(screen.getByRole("button", { name: "Probe this URL" })).toHaveAttribute("aria-disabled", "false");
     fetchSpy.mockRestore();

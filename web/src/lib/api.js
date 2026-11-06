@@ -11,6 +11,8 @@ async function must(method, path, body) {
   return data;
 }
 export const getCatalog = () => must("GET", "/api/catalog");
+export const getInfo = () => must("GET", "/api/info");
+export const setMode = (source) => must("POST", "/api/mode", { source });
 export const getDiagram = (name) => must("GET", `/api/diagrams/${encodeURIComponent(name)}`);
 export const getClients = () => must("GET", "/api/clients");
 export const scan = (defects, vertical) => must("POST", "/api/scan", { defects, vertical });

@@ -124,6 +124,23 @@ test('probe end to end against a local mock, then reset', async () => {
 
 test('unknown API paths 404 as JSON', async () => { const r = await app.get('/api/nope'); assert.equal(r.status, 404); assert.equal((await r.json()).error, 'not_found'); });
 
+test('rule 19: GET /api/info has the toggle shape, POST /api/mode switches both directions, and the refused body is a clear 400', async () => {
+  const info = await (await app.get('/api/info')).json();
+  assert.deepEqual(info, { mode: 'mock', source: 'mock', realAvailable: true, realReason: null });
+  const toReal = await (await app.post('/api/mode', { source: 'real' })).json();
+  assert.deepEqual(toReal, { mode: 'live', source: 'real', realAvailable: true, realReason: null });
+  assert.deepEqual(await (await app.get('/api/info')).json(), { mode: 'live', source: 'real', realAvailable: true, realReason: null });
+  const toMock = await (await app.post('/api/mode', { source: 'mock' })).json();
+  assert.deepEqual(toMock, { mode: 'mock', source: 'mock', realAvailable: true, realReason: null });
+  assert.equal((await app.post('/api/mode', { source: 'live' })).status, 400);
+  assert.equal((await app.post('/api/mode', { mode: 'mock' })).status, 400);
+  assert.equal((await app.post('/api/mode', { source: 'mock', extra: 1 })).status, 400);
+  assert.equal((await app.post('/api/mode', {})).status, 400);
+  assert.equal((await app.post('/api/mode', 'not json')).status, 400);
+  assert.deepEqual(await (await app.get('/api/info')).json(), { mode: 'mock', source: 'mock', realAvailable: true, realReason: null }, 'a refused switch leaves the mode unchanged');
+  assert.equal((await app.get('/api/mode')).status, 404, 'there is one toggle endpoint, POST /api/mode');
+});
+
 test('a probe URL over 2048 characters is refused as bad input before the gate', async () => {
   const long = `https://x.example/${'a'.repeat(2100)}`;
   assert.equal((await app.post('/api/probe', { url: long, confirm: true, ack: PROBE_ACK })).status, 400);
