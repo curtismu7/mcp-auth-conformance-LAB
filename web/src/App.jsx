@@ -93,7 +93,7 @@ function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, se
     } catch (e) { setResetNote(`Reset failed: ${e.message}`); }
   }, [resetBoxes]);
 
-  const cycle = () => { const next = { system: "light", light: "dark", dark: "system" }[theme]; setTheme(next); try { localStorage.setItem("conflab.theme", next); } catch { /* not remembered */ } };
+  const setThemePersist = (t) => { setTheme(t); try { localStorage.setItem("conflab.theme", t); } catch { /* not remembered */ } };
   const go = (id) => { window.location.hash = `#/${id}`; };
   const onTabKey = (e) => {
     const focused = TABS.findIndex(([id]) => tabRefs.current[id] === document.activeElement);
@@ -126,7 +126,13 @@ function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, se
           </label>
           <button type="button" onClick={resetAll}>Reset</button>
           <button type="button" aria-pressed={present} onClick={togglePresent} title="Presenter mode: P to turn on, Esc to leave">Present</button>
-          <button type="button" onClick={cycle} title="Theme: system, light, dark">Theme: {theme}</button>
+          <label className="inline">Theme
+            <select value={theme} onChange={(e) => setThemePersist(e.target.value)} data-testid="theme">
+              <option value="system">Auto</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </label>
         </div>
       </header>
       <p className="muted page reset-note" role="status" data-testid="reset-note">{resetNote}</p>

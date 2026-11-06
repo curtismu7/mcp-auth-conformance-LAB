@@ -101,9 +101,9 @@ describe("shell", () => {
   });
   it("cycles the theme and remembers it", async () => {
     await open();
-    await userEvent.click(screen.getByRole("button", { name: /Theme: system/ }));
+    await userEvent.selectOptions(screen.getByTestId("theme"), "light");
     expect(document.documentElement.dataset.theme).toBe("light");
-    await userEvent.click(screen.getByRole("button", { name: /Theme: light/ }));
+    await userEvent.selectOptions(screen.getByTestId("theme"), "dark");
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(localStorage.getItem("conflab.theme")).toBe("dark");
   });
