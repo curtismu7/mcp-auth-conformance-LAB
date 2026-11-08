@@ -102,8 +102,9 @@ export async function createApp({ env = process.env, clock } = {}) {
 
   const dist = fileURLToPath(new URL('../../web/dist', import.meta.url));
   if (existsSync(dist)) app.use(express.static(dist));
+  // Before the /api 404 below and outside the web-dist check, so it is reachable with or without a web build.
+  app.get('/api/shelf', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json(shelfInfo(env)); }); // the header "Shelf" button
   app.use('/api', (req, res) => res.status(404).json({ error: 'not_found' }));
-  app.get('/api/shelf', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json(shelfInfo()); }); // the header "Shelf" button
   // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {
     if (err.type === 'entity.too.large') return res.status(413).json({ error: 'payload_too_large', message: 'Request body is limited to 8 KB.' });

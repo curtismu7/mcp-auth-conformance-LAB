@@ -166,3 +166,13 @@ test('external probing is on only when CONFLAB_PROBE_EXTERNAL is exactly "1" (a 
     try { assert.equal((await (await a.get('/api/catalog')).json()).probe.externalEnabled, expected, String(value)); } finally { a.stop(); }
   }
 });
+
+test('GET /api/shelf is reachable with no web build: returns the SHELF_URL (trailing slash trimmed); POST is not 200', async () => {
+  const s = await startAppInRange({ STANDALONE_ENV: '/nonexistent/settings.env', SHELF_URL: 'https://shelf.example:8443/' });
+  try {
+    const r = await s.get('/api/shelf');
+    assert.equal(r.status, 200);
+    assert.deepEqual(await r.json(), { shelfUrl: 'https://shelf.example:8443' });
+    assert.notEqual((await s.post('/api/shelf', {})).status, 200);
+  } finally { s.stop(); }
+});
