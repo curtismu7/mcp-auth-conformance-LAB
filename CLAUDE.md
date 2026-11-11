@@ -17,4 +17,4 @@ Scores an MCP server's authorization behaviour against the spec expectations (di
 - Every claim about a spec or a product needs a source, or is labelled UNVERIFIED in `docs/safety.md` or `docs/references.md`.
 - Ports 4900-4949 only. Never `crypto.generateKeyPairSync('ec')` or async EC `generateKeyPair`. Only `.example` / `.invalid` hosts (plus the documentation sites we cite). The family history scan must print 0; CI runs it. Never read or embed the list.
 - Loopback-only bind, Host check, same-origin writes; Docker publishes `127.0.0.1:` only, as a test pins.
-- One writer per repo; PR and merge on green. Commits end with the Co-Authored-By line from the session's attribution reminder.
+- One writer per repo; PR and merge on green. No AI attribution anywhere (owner, 2026-11-07): no Co-Authored-By trailer and no "Generated with" line in commits, PR bodies or files; CI runs `scripts/check-no-ai-attribution.sh`.
