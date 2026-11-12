@@ -17,7 +17,8 @@ code { font-size: 13px; overflow-wrap: anywhere; }
 .skip:focus { top: 8px; }
 
 /* Header and tabs */
-.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 12px 0 4px; }
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 12px 0 4px; position: relative; }
+html { font-size: var(--fs, 16px); }
 .tools-right { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .seg { display: inline-flex; gap: 4px; }
 .inline { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }

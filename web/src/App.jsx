@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import fs from "node:fs";
 import ShelfLink from "./components/ShelfLink.jsx";
+import TopMenu, { applyFontSize } from "./top-menu/TopMenu.jsx";
 import { getCatalog, getDiagram, getInfo, resetServer, setMode as setModeRequest } from "./lib/api.js";
+
+const LAB_VERSION = (() => { try { return JSON.parse(fs.readFileSync(new URL("../../package.json", import.meta.url), "utf8")).version || null; } catch { return null; } })();
 import { boxesFromDiagram } from "./lib/diagram.js";
 import { fill } from "./lib/fill.js";
 import ScorecardTab from "./tabs/ScorecardTab.jsx";
@@ -25,11 +29,12 @@ export default function App() {
   const [theme, setTheme] = useState(() => (["light", "dark"].includes(read("conflab.theme", "")) ? read("conflab.theme", "") : "auto"));
   const [present, setPresent] = useState(() => read("conflab.present", "0") === "1");
   const [mode, setModeState] = useState(() => (read("conflab.mode", "mock") === "live" ? "live" : "mock"));
+  const [fontStep, setFontStep] = useState(() => { const f = read("conflab.font", "M"); return ["S", "M", "L"].includes(f) ? f : "M"; });
 
   // Rule 19: the toggle asks the server (server-side mode), then reloads the catalog so the banner follows.
   // Rule 19: the toggle asks the server (server-side mode), then reloads the catalog so the banner follows.
   const setMode = useCallback((m) => {
-    setModeRequest(m === "live" ? "real" : "mock").then((v) => {
+    setModeRequest(m === "real" ? "real" : "mock").then((v) => {
       const next = v?.mode === "live" ? "live" : "mock";
       setModeState(next);
       write("conflab.mode", next);
@@ -43,6 +48,7 @@ export default function App() {
   useEffect(() => { const on = () => setTab(tabFromHash()); window.addEventListener("hashchange", on); return () => window.removeEventListener("hashchange", on); }, []);
   useEffect(() => { if (theme === "auto") { try { localStorage.removeItem("conflab.theme"); } catch { /* not remembered */ } delete document.documentElement.dataset.theme; } else { try { localStorage.setItem("conflab.theme", theme); } catch { /* not remembered */ } document.documentElement.dataset.theme = theme; } }, [theme]);
   useEffect(() => { if (present) document.documentElement.dataset.present = "1"; else delete document.documentElement.dataset.present; }, [present]);
+  useEffect(() => { applyFontSize(fontStep); write("conflab.font", fontStep); }, [fontStep]);
   useEffect(() => { document.documentElement.dataset.mode = mode; }, [mode]);
 
   // Presenter mode: P toggles, Esc leaves. Keys with Ctrl, Cmd or Alt held belong to the browser, and typing in a field is never a shortcut.
@@ -69,10 +75,10 @@ export default function App() {
   );
   if (loadError) return shell(<main className="page" id="main" tabIndex={-1}><p className="alert" role="alert">Could not reach the lab server: {loadError}</p></main>);
   if (!catalog) return shell(<main className="page" id="main" tabIndex={-1}><p className="muted" role="status">Loading the lab...</p></main>);
-  return shell(<Shell catalog={catalog} tab={tab} theme={theme} setTheme={setTheme} present={present} togglePresent={togglePresent} mode={mode} setMode={setMode} />);
+  return shell(<Shell catalog={catalog} tab={tab} theme={theme} setTheme={setTheme} present={present} togglePresent={togglePresent} mode={mode} setMode={setMode} fontStep={fontStep} setFontStep={setFontStep} />);
 }
 
-function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, setMode }) {
+function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, setMode, fontStep, setFontStep }) {
   const [vertical, setVertical] = useState(catalog.verticals[0].id);
   const [card, setCard] = useState(null);
   const [scenarioId, setScenarioId] = useState(catalog.scenarios[0].id);
@@ -123,26 +129,18 @@ function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, se
       <header className="top">
         <h1><span className="mark" aria-hidden="true">AUTH</span> MCP Auth Conformance LAB</h1>
         <div className="tools-right">
+          <TopMenu
+            mode={{ value: mode === "live" ? "real" : "mock", onChange: setMode, realAvailable: true }}
+            vertical={{ value: vertical, onChange: pickVertical, options: catalog.verticals.map((v) => v.id) }}
+            theme={{ value: theme, onChange: setThemePersist }}
+            fontSize={{ value: fontStep, onChange: setFontStep }}
+            present={{ active: present, onToggle: togglePresent, label: "Present (P)" }}
+            help={{ href: "https://github.com/curtismu7/mcp-auth-conformance-LAB#readme" }}
+            version={LAB_VERSION}
+            onReset={resetAll}
+          >
             <ShelfLink />
-          <div className="seg" role="group" aria-label="Mode">
-            <button type="button" aria-pressed={mode === "mock"} onClick={() => setMode("mock")} data-testid="mode-mock">Mock</button>
-            <button type="button" aria-pressed={mode === "live"} onClick={() => setMode("live")} data-testid="mode-real">Real</button>
-          </div>
-          <span className="mode-chip" data-testid="mode">Mode: {mode}{mode === "live" ? " (Probe tab)" : " (simulated)"}</span>
-          <label className="inline">Persona
-            <select value={vertical} onChange={(e) => pickVertical(e.target.value)} aria-label="Persona and vertical">
-              {catalog.verticals.map((v) => <option key={v.id} value={v.id}>{v.name}: {v.cast.org}</option>)}
-            </select>
-          </label>
-          <button type="button" onClick={resetAll}>Reset</button>
-          <button type="button" aria-pressed={present} onClick={togglePresent} title="Presenter mode: P to turn on, Esc to leave">Present</button>
-          <label className="inline">Theme
-            <select value={theme} onChange={(e) => setThemePersist(e.target.value)} data-testid="theme">
-              <option value="auto">Auto</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
-          </label>
+          </TopMenu>
         </div>
       </header>
       <p className="muted page reset-note" role="status" data-testid="reset-note">{resetNote}</p>

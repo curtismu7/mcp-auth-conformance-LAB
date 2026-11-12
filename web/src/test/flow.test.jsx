@@ -17,14 +17,14 @@ const open = async (tab) => {
   await screen.findByRole("tablist");
   if (tab) { await userEvent.click(screen.getByRole("tab", { name: tab })); await waitFor(() => expect(screen.getByRole("tab", { name: tab })).toHaveAttribute("aria-selected", "true")); }
 };
-const goLive = async () => { await userEvent.click(screen.getByTestId("mode-real")); await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "live")); };
+const goLive = async () => { await userEvent.selectOptions(screen.getByTestId("mode-select"), "real"); await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "live")); };
 const status = (id) => within(screen.getByTestId(`check-${id}`)).getAllByText(/^(PASS|FAIL|WARN|NOT TESTED|INFO)$/)[0].textContent;
 
 describe("shell", () => {
   it("shows what is simulated on every tab, including in presenter mode", async () => {
     await open();
     expect(screen.getByTestId("banner")).toHaveTextContent("Simulated (Mock mode)");
-    await userEvent.click(screen.getByRole("button", { name: "Present" }));
+    await userEvent.click(screen.getByTestId("presenter"));
     expect(document.documentElement.dataset.present).toBe("1");
     for (const t of ["Stories", "Probe", "Clients", "Diagram", "Raw", "Scorecard"]) {
       await userEvent.click(screen.getByRole("tab", { name: t }));
@@ -34,15 +34,15 @@ describe("shell", () => {
   });
   it("has a Mock | Live toggle in the header on every tab; Mock is the default; the banner and the mode chip follow it", async () => {
     await open();
-    expect(screen.getByTestId("mode-mock")).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByTestId("mode")).toHaveTextContent("Mode: mock");
+    expect(screen.getByTestId("mode-select")).toHaveValue("mock");
+    expect(screen.getByTestId("mode-select")).toHaveValue("mock");
     expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "mock");
     for (const t of ["Scorecard", "Stories", "Probe", "Clients", "Diagram", "Raw"]) {
       await userEvent.click(screen.getByRole("tab", { name: t }));
-      expect(screen.getByTestId("mode-mock")).toBeVisible(); expect(screen.getByTestId("mode-real")).toBeVisible();
+      expect(screen.getByTestId("mode-select")).toBeVisible();
     }
     await goLive();
-    expect(screen.getByTestId("mode")).toHaveTextContent("Mode: live");
+    expect(screen.getByTestId("mode-select")).toHaveValue("real");
     expect(screen.getByTestId("banner")).toHaveTextContent("Live mode. Only the Probe tab goes live");
     expect(localStorage.getItem("conflab.mode")).toBe("live");
     for (const t of ["Scorecard", "Stories", "Clients", "Diagram", "Raw"]) {
@@ -52,7 +52,7 @@ describe("shell", () => {
     }
     await userEvent.click(screen.getByRole("tab", { name: "Probe" }));
     expect(screen.queryByTestId("live-note")).toBeNull();
-    await userEvent.click(screen.getByTestId("mode-mock"));
+    await userEvent.selectOptions(screen.getByTestId("mode-select"), "mock");
     await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "mock"));
   });
   it("opens in the mode the server answers, and a bad stored value falls back to it", async () => {
@@ -74,7 +74,7 @@ describe("shell", () => {
     expect(document.documentElement.dataset.present).toBeUndefined();
     down({ key: "p" });
     expect(document.documentElement.dataset.present).toBe("1");
-    expect(screen.getByRole("button", { name: "Present" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("presenter")).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByTestId("banner")).toBeVisible();
     down({ key: "Escape", ctrlKey: true });
     expect(document.documentElement.dataset.present).toBe("1");
@@ -85,8 +85,8 @@ describe("shell", () => {
     expect(document.documentElement.dataset.present).toBe("1");
     down({ key: "P" });
     expect(document.documentElement.dataset.present).toBeUndefined();
-    await userEvent.selectOptions(screen.getByLabelText("Persona and vertical"), "travel");
-    screen.getByLabelText("Persona and vertical").focus();
+    await userEvent.selectOptions(screen.getByLabelText("Vertical"), "travel");
+    screen.getByLabelText("Vertical").focus();
     await userEvent.keyboard("p");
     expect(document.documentElement.dataset.present).toBeUndefined();
     await userEvent.click(screen.getByRole("tab", { name: "Probe" }));
@@ -104,19 +104,19 @@ describe("shell", () => {
   });
   it("cycles the theme and remembers it", async () => {
     await open();
-    await userEvent.selectOptions(screen.getByTestId("theme"), "light");
+    await userEvent.selectOptions(screen.getByTestId("theme-select"), "light");
     expect(document.documentElement.dataset.theme).toBe("light");
-    await userEvent.selectOptions(screen.getByTestId("theme"), "dark");
+    await userEvent.selectOptions(screen.getByTestId("theme-select"), "dark");
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(localStorage.getItem("conflab.theme")).toBe("dark");
-    await userEvent.selectOptions(screen.getByTestId("theme"), "auto");
+    await userEvent.selectOptions(screen.getByTestId("theme-select"), "auto");
     expect(document.documentElement.dataset.theme).toBeUndefined();
     expect(localStorage.getItem("conflab.theme")).toBeNull();
   });
   it("persona picker changes the cast in the story text", async () => {
     await open("Stories");
     expect(screen.getByTestId("story")).toHaveTextContent("Harbor");
-    await userEvent.selectOptions(screen.getByLabelText("Persona and vertical"), "travel");
+    await userEvent.selectOptions(screen.getByLabelText("Vertical"), "travel");
     await waitFor(() => expect(screen.getByTestId("story")).toHaveTextContent("Skyline"));
     expect(screen.getByTestId("story")).not.toHaveTextContent("{{");
   });
