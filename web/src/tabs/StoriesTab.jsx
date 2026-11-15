@@ -24,7 +24,7 @@ export function ScenarioResult({ run }) {
           <tbody>{r.cases.map((x, i) => <tr key={i}><td><Inert text={x.input} /></td><td><Inert text={x.got} /></td><td>{x.ok ? "yes" : "NO"}</td></tr>)}</tbody></table>
       )}
       {"crossOriginBlocked" in r && <dl className="kv"><dt>Same-origin redirect</dt><dd>followed, final status {r.sameOriginFinalStatus}</dd><dt>Cross-origin redirect</dt><dd data-testid="redirect-blocked"><Inert text={r.crossOriginBlocked} /></dd></dl>}
-      {!r.schema && !r.rows && !r.outcome && !r.cases && !("crossOriginBlocked" in r) && <Json value={r} />}
+      {!r.schema && !r.rows && !r.outcome && !r.cases && !("crossOriginBlocked" in r) && <Json value={r} label="Story result" />}
     </div>
   );
 }

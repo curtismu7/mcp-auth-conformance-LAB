@@ -1,5 +1,5 @@
 import React from "react";
-import { Inert, pretty } from "./Inert.jsx";
+import { Inert } from "./Inert.jsx";
 
 export const STATUS_WORD = { pass: "PASS", fail: "FAIL", warn: "WARN", not_tested: "NOT TESTED", info: "INFO" };
 export const StatusPill = ({ status }) => <span className="pill" data-state={status}>{STATUS_WORD[status] || status}</span>;
@@ -51,4 +51,5 @@ export function CheckList({ checks, filter = "all" }) {
   );
 }
 
-export const Json = ({ value, testid }) => <Inert block text={pretty(value)} testid={testid} />;
+// Every JSON pane is the shared JsonPane (Rule 24): Form | JSON, theme colours, full view.
+export { Json } from "../components/JsonPane.jsx";
