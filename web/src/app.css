@@ -63,7 +63,6 @@ input[type="checkbox"] { width: 22px; height: 22px; min-height: 0; padding: 0; a
 
 /* Text from a target is shown, never run */
 .inert { white-space: pre-wrap; overflow-wrap: anywhere; }
-.inert--block { display: block; margin: 4px 0; padding: 10px; font: 13px/1.45 var(--font-mono); border: 1px dashed var(--border); border-radius: 6px; background: var(--surface-2); color: var(--text); max-height: 22rem; overflow: auto; }
 .chip { display: inline-block; padding: 0 4px; border: 1px solid var(--danger-text); border-radius: 4px; background: var(--accent-soft); color: var(--danger-text); font: 0.8em var(--font-mono); }
 
 /* Diagram */

@@ -3,13 +3,14 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../App.jsx";
+import { setJsonView } from "../components/JsonPane.jsx";
 import { startLive } from "./liveServer.js";
 import { startMockServer } from "../../../server/src/mock-http.js";
 
 let live;
 beforeAll(async () => { live = await startLive(); });
 afterAll(async () => { await live.stop(); });
-beforeEach(async () => { window.location.hash = "#/scorecard"; document.documentElement.removeAttribute("data-present"); document.documentElement.removeAttribute("data-theme"); try { localStorage.clear(); } catch { /* none */ } if (live) await fetch("/api/mode", { method: "POST", headers: { "content-type": "application/json" }, body: '{"source":"mock"}' }); });
+beforeEach(async () => { window.location.hash = "#/scorecard"; document.documentElement.removeAttribute("data-present"); document.documentElement.removeAttribute("data-theme"); try { localStorage.clear(); } catch { /* none */ } setJsonView("raw"); if (live) await fetch("/api/mode", { method: "POST", headers: { "content-type": "application/json" }, body: '{"source":"mock"}' }); });
 afterEach(cleanup);
 
 const open = async (tab) => {
@@ -294,6 +295,26 @@ describe("clients and raw", () => {
     await userEvent.click(screen.getByRole("tab", { name: "Raw" }));
     expect(screen.getByTestId("raw-traceparent").textContent).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/);
     expect(screen.getByTestId("raw-response")).toHaveTextContent("401");
+  });
+  it("shows each message through the shared JSON pane: Form | JSON, the exact JSON one click away", async () => {
+    setJsonView("form");
+    await open("Scorecard");
+    await userEvent.click(screen.getByRole("button", { name: "Score the good server" }));
+    await screen.findByTestId("score");
+    await userEvent.click(screen.getByRole("tab", { name: "Raw" }));
+    const toggle = within(screen.getByTestId("raw-response-box")).getByRole("group", { name: "Response view" });
+    expect(within(toggle).getAllByRole("button").map((b) => b.textContent)).toEqual(["Form", "JSON"]);
+    expect(screen.getByTestId("raw-response").tagName).toBe("DIV");
+    expect(screen.getByTestId("raw-response")).toHaveTextContent("401");
+    // the bodies are JSON text: each gets its own pane (not escaped text inside the message pane)
+    expect(screen.getByTestId("raw-request-body").tagName).toBe("DIV");
+    expect(screen.getByTestId("raw-request-body")).toHaveTextContent("jsonrpc");
+    expect(screen.getByTestId("raw-response-body")).toHaveTextContent("unauthorized");
+    expect(screen.getByTestId("raw-response")).not.toHaveTextContent("unauthorized");
+    await userEvent.click(within(toggle).getByRole("button", { name: "JSON" }));
+    expect(screen.getByTestId("raw-response").tagName).toBe("PRE");
+    expect(screen.getByTestId("raw-response")).toHaveTextContent('"status": 401');
+    expect(screen.getByTestId("raw-request")).toHaveTextContent('"method"');
   });
 });
 

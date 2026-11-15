@@ -51,7 +51,7 @@ export default function ProbeTab({ app }) {
           <ScoreSummary card={showCard} />
           <p className="small muted">Checks that need a token or would register a client are not run against a probe target; they show as NOT TESTED.</p>
           <CheckList checks={showCard.checks} filter="all" />
-          {log && <section className="card"><h3>Every request the probe sent ({log.length})</h3><Json value={log} testid="probe-log" /></section>}
+          {log && <section className="card"><h3>Every request the probe sent ({log.length})</h3><Json value={log} label="Probe request log" testId="probe-log" /></section>}
         </>
       )}
     </>
