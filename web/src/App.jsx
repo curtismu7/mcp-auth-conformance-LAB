@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import fs from "node:fs";
 import ShelfLink from "./components/ShelfLink.jsx";
+import VerifyMark from "./components/VerifyMark.jsx";
 import TopMenu, { applyFontSize } from "./top-menu/TopMenu.jsx";
 import { getCatalog, getDiagram, getInfo, resetServer, setMode as setModeRequest } from "./lib/api.js";
 
@@ -140,6 +141,7 @@ function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, se
             onReset={resetAll}
           >
             <ShelfLink />
+            <VerifyMark id="mcp-auth-conformance-lab" />
           </TopMenu>
         </div>
       </header>
