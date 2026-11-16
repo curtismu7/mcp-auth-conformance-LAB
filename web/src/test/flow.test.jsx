@@ -13,10 +13,12 @@ afterAll(async () => { await live.stop(); });
 beforeEach(async () => { window.location.hash = "#/scorecard"; document.documentElement.removeAttribute("data-present"); document.documentElement.removeAttribute("data-theme"); try { localStorage.clear(); } catch { /* none */ } setJsonView("raw"); if (live) await fetch("/api/mode", { method: "POST", headers: { "content-type": "application/json" }, body: '{"source":"mock"}' }); });
 afterEach(cleanup);
 
+// The six sections are the pill links in the shell bar's nav (aria-current="page" marks the open one).
+const navLink = (name) => within(screen.getByRole("navigation", { name: "Sections" })).getByRole("link", { name });
 const open = async (tab) => {
   render(<App />);
-  await screen.findByRole("tablist");
-  if (tab) { await userEvent.click(screen.getByRole("tab", { name: tab })); await waitFor(() => expect(screen.getByRole("tab", { name: tab })).toHaveAttribute("aria-selected", "true")); }
+  await screen.findByRole("navigation", { name: "Sections" });
+  if (tab) { await userEvent.click(navLink(tab)); await waitFor(() => expect(navLink(tab)).toHaveAttribute("aria-current", "page")); }
 };
 const goLive = async () => { await userEvent.selectOptions(screen.getByTestId("mode-select"), "real"); await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "live")); };
 const status = (id) => within(screen.getByTestId(`check-${id}`)).getAllByText(/^(PASS|FAIL|WARN|NOT TESTED|INFO)$/)[0].textContent;
@@ -28,7 +30,7 @@ describe("shell", () => {
     await userEvent.click(screen.getByTestId("presenter"));
     expect(document.documentElement.dataset.present).toBe("1");
     for (const t of ["Stories", "Probe", "Clients", "Diagram", "Raw", "Scorecard"]) {
-      await userEvent.click(screen.getByRole("tab", { name: t }));
+      await userEvent.click(navLink(t));
       expect(screen.getByTestId("banner")).toBeVisible();
       expect(screen.getByTestId("banner")).toHaveTextContent("No tenant");
     }
@@ -39,7 +41,7 @@ describe("shell", () => {
     expect(screen.getByTestId("mode-select")).toHaveValue("mock");
     expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "mock");
     for (const t of ["Scorecard", "Stories", "Probe", "Clients", "Diagram", "Raw"]) {
-      await userEvent.click(screen.getByRole("tab", { name: t }));
+      await userEvent.click(navLink(t));
       expect(screen.getByTestId("mode-select")).toBeVisible();
     }
     await goLive();
@@ -47,11 +49,11 @@ describe("shell", () => {
     expect(screen.getByTestId("banner")).toHaveTextContent("Live mode. Only the Probe tab goes live");
     expect(localStorage.getItem("conflab.mode")).toBe("live");
     for (const t of ["Scorecard", "Stories", "Clients", "Diagram", "Raw"]) {
-      await userEvent.click(screen.getByRole("tab", { name: t }));
+      await userEvent.click(navLink(t));
       expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "live");
       expect(screen.getByTestId("live-note")).toHaveTextContent("still uses simulated in-process mock servers");
     }
-    await userEvent.click(screen.getByRole("tab", { name: "Probe" }));
+    await userEvent.click(navLink("Probe"));
     expect(screen.queryByTestId("live-note")).toBeNull();
     await userEvent.selectOptions(screen.getByTestId("mode-select"), "mock");
     await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "mock"));
@@ -60,12 +62,12 @@ describe("shell", () => {
     // Rule 19: the mode is server-side, so the server's /api/info answer wins over anything stored.
     localStorage.setItem("conflab.mode", "mock");
     await fetch("/api/mode", { method: "POST", headers: { "content-type": "application/json" }, body: '{"source":"real"}' });
-    render(<App />); await screen.findByRole("tablist");
+    render(<App />); await screen.findByRole("navigation", { name: "Sections" });
     await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "live"));
     cleanup();
     localStorage.setItem("conflab.mode", "<script>");
     await fetch("/api/mode", { method: "POST", headers: { "content-type": "application/json" }, body: '{"source":"mock"}' });
-    render(<App />); await screen.findByRole("tablist");
+    render(<App />); await screen.findByRole("navigation", { name: "Sections" });
     await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "mock"));
   });
   it("presenter mode: P toggles, Esc leaves, the banner stays, and modifier keys or typing in a field are ignored", async () => {
@@ -90,18 +92,24 @@ describe("shell", () => {
     screen.getByLabelText("Vertical").focus();
     await userEvent.keyboard("p");
     expect(document.documentElement.dataset.present).toBeUndefined();
-    await userEvent.click(screen.getByRole("tab", { name: "Probe" }));
+    await userEvent.click(navLink("Probe"));
     await userEvent.type(screen.getByLabelText("Target MCP endpoint URL"), "pp");
     expect(document.documentElement.dataset.present).toBeUndefined();
   });
-  it("has the six tabs and moves between them with the arrow keys", async () => {
+  it("has the six sections as shell-bar nav pills; the open one carries aria-current and follows the hash", async () => {
     await open();
-    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Scorecard", "Stories", "Probe", "Clients", "Diagram", "Raw"]);
-    screen.getByRole("tab", { name: "Scorecard" }).focus();
-    await userEvent.keyboard("{ArrowRight}");
-    await waitFor(() => expect(screen.getByRole("tab", { name: "Stories" })).toHaveAttribute("aria-selected", "true"));
-    await userEvent.keyboard("{End}");
-    await waitFor(() => expect(screen.getByRole("tab", { name: "Raw" })).toHaveAttribute("aria-selected", "true"));
+    const nav = screen.getByRole("navigation", { name: "Sections" });
+    expect(within(nav).getAllByRole("link").map((t) => t.textContent)).toEqual(["Scorecard", "Stories", "Probe", "Clients", "Diagram", "Raw"]);
+    expect(navLink("Scorecard")).toHaveAttribute("aria-current", "page");
+    expect(navLink("Stories")).toHaveAttribute("href", "#/stories");
+    await userEvent.click(navLink("Stories"));
+    await waitFor(() => expect(navLink("Stories")).toHaveAttribute("aria-current", "page"));
+    expect(navLink("Scorecard")).not.toHaveAttribute("aria-current");
+    expect(window.location.hash).toBe("#/stories");
+    navLink("Raw").focus();
+    await userEvent.keyboard("{Enter}");
+    await waitFor(() => expect(navLink("Raw")).toHaveAttribute("aria-current", "page"));
+    expect(within(nav).getAllByRole("link").filter((a) => a.getAttribute("aria-current") === "page")).toHaveLength(1);
   });
   it("cycles the theme and remembers it", async () => {
     await open();
@@ -121,17 +129,35 @@ describe("shell", () => {
     await waitFor(() => expect(screen.getByTestId("story")).toHaveTextContent("Skyline"));
     expect(screen.getByTestId("story")).not.toHaveTextContent("{{");
   });
-  it("skip link, the main landmark and the tab panel all exist", async () => {
+  it("skip link, one main landmark and the open section's panel inside it", async () => {
     await open();
     expect(screen.getByText("Skip to content")).toHaveAttribute("href", "#main");
+    expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(screen.getByRole("main")).toHaveAttribute("id", "main");
-    expect(within(screen.getByRole("main")).getByRole("tabpanel")).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Scorecard" })).toHaveAttribute("aria-controls", screen.getByRole("tabpanel").id);
+    expect(screen.getByRole("main").querySelector("#panel-scorecard")).not.toBeNull();
+  });
+  it("shell bar first (brand h1, Mock badge, nav pills, TopMenu), then main with the banner as its first child", async () => {
+    await open();
+    const bar = document.querySelector("header.shell-bar");
+    expect(bar).not.toBeNull();
+    expect(document.querySelectorAll("header")).toHaveLength(1);
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(bar.querySelector(".shell-brand h1")).toHaveTextContent("MCP Auth Conformance LAB");
+    expect(within(bar).getByTestId("mode-badge")).toHaveTextContent("Mock");
+    expect(bar.querySelector('.shell-nav a[aria-current="page"]')).toHaveTextContent("Scorecard");
+    expect(bar.querySelector("[data-testid=top-menu]")).toHaveClass("shell-right");
+    expect(bar.compareDocumentPosition(screen.getByRole("main")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole("main").firstElementChild).toBe(screen.getByTestId("banner"));
+    expect(screen.getByTestId("banner").nextElementSibling).toBe(screen.getByTestId("reset-note"));
+    await goLive();
+    expect(within(bar).getByTestId("mode-badge")).toHaveTextContent("Live");
+    await userEvent.selectOptions(screen.getByTestId("mode-select"), "mock");
+    await waitFor(() => expect(within(bar).getByTestId("mode-badge")).toHaveTextContent("Mock"));
   });
   it("Run buttons use aria-disabled, never the disabled attribute, so keyboard focus is kept", async () => {
     await open("Stories");
     expect(screen.getByRole("button", { name: "Run this story" })).not.toBeDisabled();
-    await userEvent.click(screen.getByRole("tab", { name: "Probe" }));
+    await userEvent.click(navLink("Probe"));
     const probe = screen.getByRole("button", { name: "Probe this URL" });
     probe.focus();
     expect(probe).toHaveAttribute("aria-disabled", "true");
@@ -289,10 +315,10 @@ describe("clients and raw", () => {
   it("shows raw requests with a traceparent after a scan", async () => {
     await open("Raw");
     expect(screen.getByTestId("raw-empty")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("tab", { name: "Scorecard" }));
+    await userEvent.click(navLink("Scorecard"));
     await userEvent.click(screen.getByRole("button", { name: "Score the good server" }));
     await screen.findByTestId("score");
-    await userEvent.click(screen.getByRole("tab", { name: "Raw" }));
+    await userEvent.click(navLink("Raw"));
     expect(screen.getByTestId("raw-traceparent").textContent).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/);
     expect(screen.getByTestId("raw-response")).toHaveTextContent("401");
   });
@@ -301,7 +327,7 @@ describe("clients and raw", () => {
     await open("Scorecard");
     await userEvent.click(screen.getByRole("button", { name: "Score the good server" }));
     await screen.findByTestId("score");
-    await userEvent.click(screen.getByRole("tab", { name: "Raw" }));
+    await userEvent.click(navLink("Raw"));
     const toggle = within(screen.getByTestId("raw-response-box")).getByRole("group", { name: "Response view" });
     expect(within(toggle).getAllByRole("button").map((b) => b.textContent)).toEqual(["Form", "JSON"]);
     expect(screen.getByTestId("raw-response").tagName).toBe("DIV");
@@ -323,7 +349,7 @@ describe("diagram in the app", () => {
     await open("Scorecard");
     await userEvent.click(screen.getByRole("button", { name: "Score the good server" }));
     await screen.findByTestId("score");
-    await userEvent.click(screen.getByRole("tab", { name: "Diagram" }));
+    await userEvent.click(navLink("Diagram"));
     await screen.findByTestId("caption");
     expect(screen.getByTestId("caption")).toHaveTextContent("requests from the scorecard");
     await userEvent.click(screen.getByRole("button", { name: "Simulate" }));

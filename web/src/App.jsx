@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import fs from "node:fs";
 import ShelfLink from "./components/ShelfLink.jsx";
 import VerifyMark from "./components/VerifyMark.jsx";
@@ -65,21 +65,22 @@ export default function App() {
     return () => window.removeEventListener("keydown", on);
   }, [togglePresent]);
 
-  // The banner is outside every tab and outside [data-admin-only], so presenter mode never hides it. It shows the mode in the header.
+  // The banner is the first child of <main> (below the shell bar), outside every tab and outside [data-admin-only], so presenter mode never hides it.
   const banner = catalog?.banner?.[mode] || BANNER_UNKNOWN;
-  const shell = (body) => (
+  const skip = <a className="skip" href="#main" onClick={(e) => { e.preventDefault(); document.getElementById("main")?.focus(); }}>Skip to content</a>;
+  if (loadError || !catalog) return (
     <>
-      <a className="skip" href="#main" onClick={(e) => { e.preventDefault(); document.getElementById("main")?.focus(); }}>Skip to content</a>
-      <div className="banner" role="note" data-state={mode} data-testid="banner">{banner}</div>
-      {body}
+      {skip}
+      <main className="page" id="main" tabIndex={-1}>
+        <div className="banner" role="note" data-state={mode} data-testid="banner">{banner}</div>
+        {loadError ? <p className="alert" role="alert">Could not reach the lab server: {loadError}</p> : <p className="muted" role="status">Loading the lab...</p>}
+      </main>
     </>
   );
-  if (loadError) return shell(<main className="page" id="main" tabIndex={-1}><p className="alert" role="alert">Could not reach the lab server: {loadError}</p></main>);
-  if (!catalog) return shell(<main className="page" id="main" tabIndex={-1}><p className="muted" role="status">Loading the lab...</p></main>);
-  return shell(<Shell catalog={catalog} tab={tab} theme={theme} setTheme={setTheme} present={present} togglePresent={togglePresent} mode={mode} setMode={setMode} fontStep={fontStep} setFontStep={setFontStep} />);
+  return <>{skip}<Shell catalog={catalog} tab={tab} theme={theme} setTheme={setTheme} present={present} togglePresent={togglePresent} mode={mode} setMode={setMode} fontStep={fontStep} setFontStep={setFontStep} banner={banner} /></>;
 }
 
-function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, setMode, fontStep, setFontStep }) {
+function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, setMode, fontStep, setFontStep, banner }) {
   const [vertical, setVertical] = useState(catalog.verticals[0].id);
   const [card, setCard] = useState(null);
   const [scenarioId, setScenarioId] = useState(catalog.scenarios[0].id);
@@ -90,7 +91,6 @@ function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, se
   const [diagramError, setDiagramError] = useState(null);
   const [boxes, setBoxes] = useState([]);
   const [resetNote, setResetNote] = useState("");
-  const tabRefs = useRef({});
 
   // The diagram is diagram-studio/1 data, loaded by name from the server (rule 17).
   useEffect(() => {
@@ -112,47 +112,43 @@ function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, se
 
   const setThemePersist = (t) => { setTheme(t); };
   const go = (id) => { window.location.hash = `#/${id}`; };
-  const onTabKey = (e) => {
-    const focused = TABS.findIndex(([id]) => tabRefs.current[id] === document.activeElement);
-    const i = focused >= 0 ? focused : TABS.findIndex(([id]) => id === tab);
-    const to = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: TABS.length - 1 }[e.key];
-    if (to === undefined) return;
-    e.preventDefault();
-    const [id] = TABS[(to + TABS.length) % TABS.length];
-    go(id); tabRefs.current[id]?.focus();
-  };
 
   const app = { catalog, cast, vertical, card, setCard, scenarioId, setScenarioId, scenarioRun, setScenarioRun, cursor, setCursor, sim, setSim, boxes, setBoxes, diagram, diagramError, resetBoxes, theme, present, mode, setMode, go };
   const Panel = { scorecard: ScorecardTab, stories: StoriesTab, probe: ProbeTab, clients: ClientsTab, diagram: DiagramTab, raw: RawTab }[tab];
 
   return (
     <>
-      <header className="top">
-        <h1><span className="mark" aria-hidden="true">AUTH</span> MCP Auth Conformance LAB</h1>
-        <div className="tools-right">
-          <TopMenu
-            mode={{ value: mode === "live" ? "real" : "mock", onChange: setMode, realAvailable: true }}
-            vertical={{ value: vertical, onChange: pickVertical, options: catalog.verticals.map((v) => v.id) }}
-            theme={{ value: theme, onChange: setThemePersist }}
-            fontSize={{ value: fontStep, onChange: setFontStep }}
-            present={{ active: present, onToggle: togglePresent, label: "Present (P)" }}
-            help={{ href: "https://github.com/curtismu7/mcp-auth-conformance-LAB#readme" }}
-            version={LAB_VERSION}
-            onReset={resetAll}
-          >
-            <ShelfLink />
-            <VerifyMark id="mcp-auth-conformance-lab" />
-          </TopMenu>
-        </div>
+      <header className="shell-bar">
+        <span className="shell-brand">
+          <span className="shell-logo" aria-hidden="true">AUTH</span>
+          <h1>MCP Auth Conformance LAB</h1>
+          {mode === "live"
+            ? <span className="shell-badge shell-badge--real" data-testid="mode-badge">Live</span>
+            : <span className="shell-badge" data-testid="mode-badge">Mock</span>}
+        </span>
+        <nav className="shell-nav" aria-label="Sections">
+          {TABS.map(([id, label]) => (
+            <a key={id} href={`#/${id}`} aria-current={id === tab ? "page" : undefined} onClick={(e) => { e.preventDefault(); go(id); }}>{label}</a>
+          ))}
+        </nav>
+        <TopMenu
+          mode={{ value: mode === "live" ? "real" : "mock", onChange: setMode, realAvailable: true }}
+          vertical={{ value: vertical, onChange: pickVertical, options: catalog.verticals.map((v) => v.id) }}
+          theme={{ value: theme, onChange: setThemePersist }}
+          fontSize={{ value: fontStep, onChange: setFontStep }}
+          present={{ active: present, onToggle: togglePresent, label: "Present (P)" }}
+          help={{ href: "https://github.com/curtismu7/mcp-auth-conformance-LAB#readme" }}
+          version={LAB_VERSION}
+          onReset={resetAll}
+        >
+          <ShelfLink />
+          <VerifyMark id="mcp-auth-conformance-lab" />
+        </TopMenu>
       </header>
-      <p className="muted page reset-note" role="status" data-testid="reset-note">{resetNote}</p>
-      <div className="tabbar" role="tablist" aria-label="Sections" onKeyDown={onTabKey}>
-        {TABS.map(([id, label]) => (
-          <button key={id} id={`tab-${id}`} ref={(el) => { tabRefs.current[id] = el; }} type="button" role="tab" aria-selected={id === tab} aria-controls={`panel-${id}`} tabIndex={id === tab ? 0 : -1} className="tab" onClick={() => go(id)}>{label}</button>
-        ))}
-      </div>
       <main className="page" id="main" tabIndex={-1}>
-        <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+        <div className="banner" role="note" data-state={mode} data-testid="banner">{banner}</div>
+        <p className="muted reset-note" role="status" data-testid="reset-note">{resetNote}</p>
+        <div id={`panel-${tab}`}>
           <p className="lede" data-admin-only>{fill("Score {{server}} for {{org}} against the MCP authorization expectations, with the evidence, the severity, a fix and the spec behind every check. Switch the persona to change the cast.", cast)}</p>
           {mode === "live" && tab !== "probe" && <p className="note" data-testid="live-note">{LIVE_NOTE}</p>}
           <Panel app={app} />
