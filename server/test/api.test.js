@@ -176,3 +176,19 @@ test('GET /api/shelf is reachable with no web build: returns the SHELF_URL (trai
     assert.notEqual((await s.post('/api/shelf', {})).status, 200);
   } finally { s.stop(); }
 });
+
+// Rule 26 (owner, 2026-11-17): the boot mode is sticky. CONFLAB_LAB_MODE=real boots Live; anything
+// else (a typo, unset) boots Mock. The env read is the createApp env, so no child process is needed.
+test('rule 26: CONFLAB_LAB_MODE=real boots Live, a typo boots Mock, and the toggle still switches', async () => {
+  const sticky = await startAppInRange({ CONFLAB_LAB_MODE: 'real' });
+  try { assert.deepEqual(await (await sticky.get('/api/info')).json(), { mode: 'live', source: 'real', realAvailable: true, realReason: null }); }
+  finally { sticky.stop(); }
+  const typo = await startAppInRange({ CONFLAB_LAB_MODE: 'REAL-SERVER' });
+  try { assert.equal((await (await typo.get('/api/info')).json()).mode, 'mock', 'only the exact word opts in'); }
+  finally { typo.stop(); }
+  const both = await startAppInRange({ CONFLAB_LAB_MODE: 'real' });
+  try {
+    await both.post('/api/mode', { source: 'mock' });
+    assert.equal((await (await both.get('/api/info')).json()).mode, 'mock', 'the toggle still switches back at runtime');
+  } finally { both.stop(); }
+});
