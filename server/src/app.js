@@ -30,7 +30,9 @@ export async function createApp({ env = process.env, clock } = {}) {
   let last = null; let probing = false;
   // Rule 19: the mode is server-side and runtime-switchable (POST /api/mode). Live is always available here:
   // the probe is loopback-only by default and needs no live tenant, so there is no 409 path.
-  let mode = 'mock';
+  // Rule 26 (owner, 2026-11-17): sticky boot. CONFLAB_LAB_MODE=real starts in Live, so a rebuild cannot
+  // silently drop the lab back to Mock; anything else boots Mock.
+  let mode = String(env.CONFLAB_LAB_MODE || '').trim().toLowerCase() === 'real' ? 'live' : 'mock';
   const modeView = () => ({ mode, source: mode === 'mock' ? 'mock' : 'real', realAvailable: true, realReason: null });
 
   app.disable('x-powered-by');
