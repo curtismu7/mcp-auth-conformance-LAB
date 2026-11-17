@@ -1,6 +1,6 @@
 /* App layout only. Colours, fonts, controls, the banner and the dark theme come from styles/standalone-ui.css (loaded first).
    Tokens only here: no colour literals, no dark-mode media query, no forced priority, breakpoints 600px and 900px only. */
-.page { max-width: 1100px; margin: 0 auto; padding: 16px 0 32px; }
+.page { max-width: 2200px; margin: 0 auto; padding: 16px 0 32px; }
 .page:focus { outline-offset: 0; }
 h2 { margin: 8px 0 4px; font-size: 24px; }
 h3 { margin: 0 0 8px; font-size: 17px; }
