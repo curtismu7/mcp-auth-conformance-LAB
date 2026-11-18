@@ -20,3 +20,4 @@ export const runScenario = (id, vertical) => must("POST", "/api/scenario", { id,
 export const resetServer = () => must("POST", "/api/reset", {});
 // Probe refusals (412 confirmation, 422 refused, 429 busy) are shown to the viewer, not thrown.
 export const probe = (url, ack) => call("POST", "/api/probe", { url, confirm: true, ack });
+export const getTalkTrack = () => must("GET", "/api/talk-track");
