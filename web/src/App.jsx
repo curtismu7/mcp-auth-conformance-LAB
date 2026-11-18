@@ -3,7 +3,8 @@ import fs from "node:fs";
 import ShelfLink from "./components/ShelfLink.jsx";
 import VerifyMark from "./components/VerifyMark.jsx";
 import TopMenu, { applyFontSize } from "./top-menu/TopMenu.jsx";
-import { getCatalog, getDiagram, getInfo, resetServer, setMode as setModeRequest } from "./lib/api.js";
+import { getCatalog, getDiagram, getInfo, resetServer, setMode as setModeRequest, getTalkTrack } from "./lib/api.js";
+import TalkTrackDialog from "./talk-track/TalkTrackDialog.jsx";
 
 const LAB_VERSION = (() => { try { return JSON.parse(fs.readFileSync(new URL("../../package.json", import.meta.url), "utf8")).version || null; } catch { return null; } })();
 import { boxesFromDiagram } from "./lib/diagram.js";
@@ -29,6 +30,9 @@ export default function App() {
   const [tab, setTab] = useState(tabFromHash);
   const [theme, setTheme] = useState(() => (["light", "dark"].includes(read("conflab.theme", "")) ? read("conflab.theme", "") : "auto"));
   const [present, setPresent] = useState(() => read("conflab.present", "0") === "1");
+  const [talkOpen, setTalkOpen] = useState(false);
+  const [talk, setTalk] = useState([]);
+  useEffect(() => { getTalkTrack().then((t) => setTalk(t.talkTrack ?? [])).catch(() => {}); }, []);
   const [mode, setModeState] = useState(() => (read("conflab.mode", "mock") === "live" ? "live" : "mock"));
   const [fontStep, setFontStep] = useState(() => { const f = read("conflab.font", "M"); return ["S", "M", "L"].includes(f) ? f : "M"; });
 
@@ -77,10 +81,10 @@ export default function App() {
       </main>
     </>
   );
-  return <>{skip}<Shell catalog={catalog} tab={tab} theme={theme} setTheme={setTheme} present={present} togglePresent={togglePresent} mode={mode} setMode={setMode} fontStep={fontStep} setFontStep={setFontStep} banner={banner} /></>;
+  return <>{skip}<Shell catalog={catalog} tab={tab} theme={theme} setTheme={setTheme} present={present} togglePresent={togglePresent} mode={mode} setMode={setMode} fontStep={fontStep} setFontStep={setFontStep} banner={banner} talkOpen={talkOpen} setTalkOpen={setTalkOpen} talk={talk} /></>;
 }
 
-function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, setMode, fontStep, setFontStep, banner }) {
+function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, setMode, fontStep, setFontStep, banner, talkOpen, setTalkOpen, talk }) {
   const [vertical, setVertical] = useState(catalog.verticals[0].id);
   const [card, setCard] = useState(null);
   const [scenarioId, setScenarioId] = useState(catalog.scenarios[0].id);
@@ -137,6 +141,7 @@ function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, se
           theme={{ value: theme, onChange: setThemePersist }}
           fontSize={{ value: fontStep, onChange: setFontStep }}
           present={{ active: present, onToggle: togglePresent, label: "Present (P)" }}
+          talkTrack={{ active: talkOpen, onToggle: () => setTalkOpen((v) => !v) }}
           help={{ href: "https://github.com/curtismu7/mcp-auth-conformance-LAB#readme" }}
           version={LAB_VERSION}
           onReset={resetAll}
@@ -154,6 +159,8 @@ function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, se
           <Panel app={app} />
         </div>
       </main>
+      <TalkTrackDialog isOpen={talkOpen} onClose={() => setTalkOpen(false)} talk={talk} />
+
     </>
   );
 }

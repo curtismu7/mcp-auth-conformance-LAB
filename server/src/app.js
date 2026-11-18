@@ -10,6 +10,7 @@ import { createProbeClient, PROBE_LIMITS } from './probe.js';
 import { REFS } from './references.js';
 import { publicClients } from './clients.js';
 import { SCENARIOS, VERTICALS, getVertical, renderScenario } from './stories.js';
+import { TALK_TRACK } from './talkTrack.js';
 import { runScenario } from './scenarios.js';
 import { DIAGRAM_NAMES, getDiagram } from './diagramData.js';
 import { shelfInfo } from './shelfLink.js';
@@ -41,6 +42,8 @@ export async function createApp({ env = process.env, clock } = {}) {
   app.use(sameOriginWrites);
   app.use(express.json({ limit: '8kb' }));
   app.use('/api/health', health.router);
+
+  app.get('/api/talk-track', (_req, res) => res.json({ talkTrack: TALK_TRACK }));
 
   app.get('/api/catalog', (req, res) => res.json({
     banner: BANNERS, diagrams: DIAGRAM_NAMES,
