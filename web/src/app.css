@@ -44,8 +44,12 @@ html { font-size: var(--fs, 16px); }
 .controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px 20px; }
 .controls--spaced { margin-bottom: 12px; }
 .controls label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); min-width: 0; max-width: 100%; }
-.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr)); gap: 16px; align-items: start; }
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
 .cols > * { min-width: 0; }
+@media (max-width: 900px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.step-num { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 999px;
+  background: var(--accent-gradient); color: var(--on-accent); font: 700 11px var(--font-mono);
+  margin-right: 8px; vertical-align: 2px; }
 .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; font-size: 13px; color: var(--muted); }
 .field input { width: 100%; font-family: var(--font-mono); font-size: 14px; }
 .check { display: inline-flex; align-items: center; gap: 8px; margin: 4px 12px 4px 0; font-size: 14px; color: var(--text); }
@@ -124,7 +128,8 @@ input[type="checkbox"] { width: 22px; height: 22px; min-height: 0; padding: 0; a
 .ck__body h4 { margin: 10px 0 2px; color: var(--muted); }
 .ck__line { margin: 2px 0; }
 .ck__ref { margin-right: 12px; }
-.defects { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr)); gap: 4px 16px; }
+.defects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; }
+@media (max-width: 900px) { .defects { grid-template-columns: minmax(0, 1fr); } }
 .defects label { display: flex; gap: 8px; align-items: start; font-size: 14px; min-height: 32px; }
 .rules { margin: 4px 0 12px; padding-left: 20px; }
 

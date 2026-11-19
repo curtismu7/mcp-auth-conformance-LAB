@@ -20,7 +20,7 @@ export default function ScorecardTab({ app }) {
   };
   return (
     <>
-      <h2>Score a mock MCP server</h2>
+      <h2><span className="step-num" aria-hidden="true">1</span>Score a mock MCP server</h2>
       <p className="lede" data-admin-only>{cast.server} is simulated in process. Tick defects to break it, then score it against the MCP authorization expectations. Nothing leaves this page.</p>
       <fieldset>
         <legend>Defects to inject (none = a server that does it right)</legend>
