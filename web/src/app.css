@@ -156,3 +156,12 @@ button.primary[aria-disabled="true"] { opacity: 0.88; }
   .keytable tr { border-bottom: 2px solid var(--border); padding: 4px 0; }
   .keytable td { border-bottom: 0; padding: 2px 4px; }
 }
+
+/* An expanded box (diagram kit §8c): give it a width the details can be read at. */
+.react-flow__node.dk-open {
+  width: 320px;
+}
+.react-flow__node.dk-open .flow-box {
+  max-height: 420px;
+  overflow-y: auto;
+}
