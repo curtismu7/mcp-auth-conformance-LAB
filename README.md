@@ -112,3 +112,14 @@ On Node 26: 156 tests pass (85 server, 51 web, 20 scripts). The browser logs the
 - Owner: the Ping demo family owner (see the standalone rulebook).
 - License: MIT (`LICENSE`).
 - Found a problem? Open an issue on the repo.
+
+## Postman & MCP
+
+Prefer raw API calls or an agent?
+
+- **Postman:** [`mcp-auth-conformance/`](https://github.com/curtismu7/ping-postman-packages) in
+  `curtismu7/ping-postman-packages` — walks the Probe path by hand (401 challenge → RFC 9728 →
+  RFC 8414 → DCR/CIMD → authenticated initialize → `insufficient_scope`). Works against the
+  mock (`node scripts/mock.mjs`) or any real MCP server.
+- **MCP:** the `mcp_conformance_run` tool of [`ping-provisioning-mcp-LAB`](https://github.com/curtismu7/ping-provisioning-mcp-LAB)
+  returns a scored check list with evidence, read-only without a token.
