@@ -17,7 +17,7 @@ test('the good server scores 100% and every check passes (registration_dcr is in
 
 for (const d of DEFECTS) {
   test(`mutation: defect ${d.id} fails exactly ${JSON.stringify(d.fails)} and warns exactly ${JSON.stringify(d.warns || [])}`, async () => {
-    for (const vertical of ['banking', 'travel', 'retail']) {
+    for (const vertical of ['airlines', 'banking', 'retail']) {
       const card = await scanMock([d.id], vertical);
       assert.deepEqual(by(card, 'fail'), [...d.fails].sort(), `${vertical} fail`);
       assert.deepEqual(by(card, 'warn'), [...(d.warns || [])].sort(), `${vertical} warn`);

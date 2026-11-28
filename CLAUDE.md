@@ -8,6 +8,7 @@ Scores an MCP server's authorization behaviour against the spec expectations (di
 - By hand before a PR: `bash ~/Development/AI-DEMO-Standalone/scripts/check-drift.sh .`, `check-css.sh .`, and `node ~/Development/demo-kit-base/scripts/conformance.mjs . --new` (0 failed; two advisory rule 18 warnings are expected).
 
 ## Rules that bite
+- The default story is AirGuard Airlines (a fictional airline), vertical id `airlines` (`server/data/verticals.json`, `DEFAULT_VERTICAL` in `server/src/mock.js`, `defaultVertical` in the catalog); banking and retail stay as packs, and the earlier ids `airline` and `travel` are aliases. Old brands (Meridian, Skyline) are pinned out by `server/test/airlineDefault.test.js`. The checks and mock behaviour are domain-free: change the cast only.
 - Header toggle Mock | Live on every page; Mock is the default. Only the Probe tab is live; the other tabs stay simulated and say so. Banner and mode chip follow the toggle; presenter mode (P / Esc, modifier keys ignored) keeps the banner.
 - The probe is read-only, https only (http for loopback), one origin, no credentials, and off for external hosts by default. Never set `CONFLAB_PROBE_EXTERNAL` in Docker (a test pins it); it is exactly `1` or off.
 - Settings: only the one shared file `~/Development/.env` (`STANDALONE_ENV` overrides), parsed with `util.parseEnv`, taking only `CONFLAB_PROBE_EXTERNAL`. No per-app `.env` loader, no bare `MODE`.

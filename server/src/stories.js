@@ -1,11 +1,11 @@
 // Stories as data. verticals.json carries the cast, scenarios.json the steps. {{tokens}} are filled from the chosen vertical,
-// so one story reads right for banking, travel and retail.
+// so one story reads right for airlines (the default), banking and retail.
 import fs from 'node:fs';
 
 const load = (n) => JSON.parse(fs.readFileSync(new URL(`../data/${n}`, import.meta.url), 'utf8'));
 export const VERTICALS = load('verticals.json');
 export const SCENARIOS = load('scenarios.json');
-export const getVertical = (id) => VERTICALS.find((v) => v.id === id);
+export const getVertical = (id) => VERTICALS.find((v) => v.id === id || (v.aliases || []).includes(id));
 export const getScenario = (idOrSlug) => SCENARIOS.find((s) => s.id === idOrSlug || s.slug === idOrSlug);
 
 export function render(value, tokens) {

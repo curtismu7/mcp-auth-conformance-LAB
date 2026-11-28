@@ -8,7 +8,8 @@ const load = (n) => JSON.parse(fs.readFileSync(new URL(`../data/${n}`, import.me
 export const DEFECTS = load('defects.json');
 export const VERTICALS = load('verticals.json');
 export const DEFECT_IDS = DEFECTS.map((d) => d.id);
-export const getVertical = (id) => VERTICALS.find((v) => v.id === id);
+export const DEFAULT_VERTICAL = 'airlines';
+export const getVertical = (id) => VERTICALS.find((v) => v.id === id || (v.aliases || []).includes(id));
 export const MOCK_ORIGIN = 'https://mcp.example';
 export const UNRELATED_RESOURCE = 'https://unrelated.example/mcp';
 export const WELL_KNOWN_PRM = '/.well-known/oauth-protected-resource';
@@ -17,9 +18,9 @@ const json = (status, obj, headers = {}) => ({ status, headers: { 'content-type'
 const b64url = (buf) => buf.toString('base64url');
 const isLoop = (h) => h === 'localhost' || h === '[::1]' || /^127(\.\d{1,3}){3}$/.test(h);
 
-export function createMock({ defects = [], vertical = 'banking', origin = MOCK_ORIGIN } = {}) {
+export function createMock({ defects = [], vertical = DEFAULT_VERTICAL, origin = MOCK_ORIGIN } = {}) {
   for (const d of defects) if (!DEFECT_IDS.includes(d)) throw new Error(`unknown defect: ${d}`);
-  const cast = (getVertical(vertical) || getVertical('banking')).cast;
+  const cast = (getVertical(vertical) || getVertical(DEFAULT_VERTICAL)).cast;
   const has = (d) => defects.includes(d);
   const resource = `${origin}/mcp`;
   const prmPath = `${WELL_KNOWN_PRM}/mcp`;

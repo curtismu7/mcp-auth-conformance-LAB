@@ -20,7 +20,7 @@
 - **Discovery order** follows the MCP page: `resource_metadata` from the challenge when same-origin and https, else the path-specific well-known URI, else the root one; authorization server metadata via RFC 8414 then OIDC discovery (with the path-insertion order for issuers that have a path).
 - **Trace envelope.** Every request the engine makes becomes a message `{seq, op, label, from, to, traceparent, spanId, at, request, response}` with a W3C `traceparent` (also sent as a header). Text is made inert (control and bidi characters removed, length capped) and `Authorization`/`Cookie` values are redacted.
 - **Walkers are iterative.** The WWW-Authenticate parser is a linear scan with hard limits; the engine never recurses over documents (hostile-input tests cover 200k-deep JSON, 1M-character headers and 100k-entry arrays).
-- **Health and doctor.** `GET /api/health` is `demo-health/1` from a background self-check; `npm run doctor` adds the full scenario suite across all three verticals and a port check.
+- **Health and doctor.** `GET /api/health` is `demo-health/1` from a background self-check; `npm run doctor` adds the full scenario suite across all three verticals (airlines is the default) and a port check.
 - **Reset.** `POST /api/reset` (or `npm run reset`) clears the last scorecard; every scan builds a fresh mock, so there is no other state.
 
 ## Web, modes and the diagram

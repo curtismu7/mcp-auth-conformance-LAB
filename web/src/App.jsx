@@ -85,7 +85,7 @@ export default function App() {
 }
 
 function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, setMode, fontStep, setFontStep, banner, talkOpen, setTalkOpen, talk }) {
-  const [vertical, setVertical] = useState(catalog.verticals[0].id);
+  const [vertical, setVertical] = useState(catalog.defaultVertical || catalog.verticals[0].id);
   const [card, setCard] = useState(null);
   const [scenarioId, setScenarioId] = useState(catalog.scenarios[0].id);
   const [scenarioRun, setScenarioRun] = useState(null);

@@ -2,7 +2,7 @@
 // -> { id, kind, pass, problems: [], result }. Never throws for an unexpected outcome: it reports the mismatch.
 import http from 'node:http';
 import { runScan } from './engine.js';
-import { createMock, getVertical } from './mock.js';
+import { createMock, getVertical, DEFAULT_VERTICAL } from './mock.js';
 import { createMockClient } from './mock-client.js';
 import { startMockServer } from './mock-http.js';
 import { createProbeClient, validateProbeTarget } from './probe.js';
@@ -16,7 +16,7 @@ const idsWith = (card, status) => card.checks.filter((c) => c.status === status)
 const same = (a, b) => JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
 const parse = (b) => { try { return JSON.parse(b); } catch { return null; } };
 
-export async function scanMock(defects, vertical = 'banking', clock) {
+export async function scanMock(defects, vertical = DEFAULT_VERTICAL, clock) {
   const mock = createMock({ defects, vertical });
   return runScan({ client: createMockClient(mock), clock, label: defects.join('+') || 'good' });
 }
@@ -85,7 +85,7 @@ async function probeRedirect() {
   } finally { for (const x of [a, b]) { x.s.close(); x.s.closeAllConnections?.(); } }
 }
 
-export async function runScenario(idOrSlug, verticalId = 'banking', { clock } = {}) {
+export async function runScenario(idOrSlug, verticalId = DEFAULT_VERTICAL, { clock } = {}) {
   const raw = getScenario(idOrSlug);
   if (!raw) throw new Error(`unknown scenario ${idOrSlug}`);
   const vertical = getVertical(verticalId); if (!vertical) throw new Error(`unknown vertical ${verticalId}`);
@@ -129,4 +129,4 @@ export async function runScenario(idOrSlug, verticalId = 'banking', { clock } = 
   return { id: scenario.id, slug: scenario.slug, kind: scenario.kind, vertical: verticalId, title: scenario.title, pass: problems.length === 0, problems, result };
 }
 
-export const runAllScenarios = async (verticalId = 'banking') => { const out = []; for (const s of SCENARIOS) out.push(await runScenario(s.id, verticalId)); return out; };
+export const runAllScenarios = async (verticalId = DEFAULT_VERTICAL) => { const out = []; for (const s of SCENARIOS) out.push(await runScenario(s.id, verticalId)); return out; };

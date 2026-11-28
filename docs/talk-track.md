@@ -10,7 +10,7 @@ About ten minutes. Start the lab (`./scripts/run.sh`, then http://127.0.0.1:4901
 
 ## Flow
 
-1. **Set the scene (30 seconds).** Pick a vertical (banking, travel or retail). "The target is a made-up MCP server. Nothing leaves this machine."
+1. **Set the scene (30 seconds).** The lab opens on AirGuard Airlines, a made-up airline; the vertical picker also has banking and retail. "The target is a made-up MCP server. Nothing leaves this machine."
 2. **Good server, S01 (1 minute).** Scorecard, S01: 100%. Open one check: evidence, MUST or SHOULD, severity, fix hint, spec citation. "MUST counts more than SHOULD; a check that was not tested is left out, not guessed."
 3. **Break one thing, S02, S03, S05 (3 minutes).** Pick two or three: no protected resource metadata (S02), empty first parameter in WWW-Authenticate (S03), S256 not advertised (S05). "Each defect fails exactly its own checks and nothing else." Then Diagram: Simulate to show where the client gets stuck.
 4. **Gateway warning, S13 (1 minute).** "A gateway can answer RFC 9728 metadata for any path, so a probe proves the gateway is there, not that the application is." The lab warns instead of passing.

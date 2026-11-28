@@ -34,7 +34,7 @@ test('every reference is recorded in docs/references.md with a verified or UNVER
   assert.match(refsMd, /UNVERIFIED/);
 });
 
-test('stories: all three verticals share a cast shape, every token fills, no raw {{ left, and every host is reserved', () => {
+test('stories: all three verticals (airlines, banking, retail) share a cast shape, every token fills, no raw {{ left, and every host is reserved', () => {
   const keys = (v) => Object.keys(v.cast).sort().join();
   for (const v of VERTICALS) assert.equal(keys(v), keys(VERTICALS[0]), v.id);
   assert.equal(VERTICALS.length, 3);

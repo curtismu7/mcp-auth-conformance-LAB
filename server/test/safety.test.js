@@ -90,7 +90,7 @@ test('zero outbound: every defect scan and every scenario in every vertical make
   const g = installNetguard();
   try {
     for (const d of [[], ...DEFECT_IDS.map((x) => [x])]) await scanMock(d);
-    for (const v of ['banking', 'travel', 'retail']) for (const r of await runAllScenarios(v)) assert.equal(r.pass, true, `${r.id}/${v}: ${r.problems}`);
+    for (const v of ['airlines', 'banking', 'retail']) for (const r of await runAllScenarios(v)) assert.equal(r.pass, true, `${r.id}/${v}: ${r.problems}`);
     assert.deepEqual(g.attempts, []);
   } finally { g.uninstall(); }
 });
