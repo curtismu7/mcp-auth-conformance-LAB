@@ -88,7 +88,7 @@ describe("shell", () => {
     expect(document.documentElement.dataset.present).toBe("1");
     down({ key: "P" });
     expect(document.documentElement.dataset.present).toBeUndefined();
-    await userEvent.selectOptions(screen.getByLabelText("Vertical"), "travel");
+    await userEvent.selectOptions(screen.getByLabelText("Vertical"), "banking");
     screen.getByLabelText("Vertical").focus();
     await userEvent.keyboard("p");
     expect(document.documentElement.dataset.present).toBeUndefined();
@@ -124,9 +124,12 @@ describe("shell", () => {
   });
   it("persona picker changes the cast in the story text", async () => {
     await open("Stories");
-    expect(screen.getByTestId("story")).toHaveTextContent("Harbor");
-    await userEvent.selectOptions(screen.getByLabelText("Vertical"), "travel");
-    await waitFor(() => expect(screen.getByTestId("story")).toHaveTextContent("Skyline"));
+    expect(screen.getByLabelText("Vertical")).toHaveValue("airlines");
+    expect(screen.getByTestId("story")).toHaveTextContent("AirGuard bookings MCP server");
+    for (const old of ["Harbor", "Skyline", "Fieldstone", "Meridian"]) expect(screen.getByTestId("story")).not.toHaveTextContent(old);
+    await userEvent.selectOptions(screen.getByLabelText("Vertical"), "banking");
+    await waitFor(() => expect(screen.getByTestId("story")).toHaveTextContent("Harbor"));
+    expect(screen.getByTestId("story")).not.toHaveTextContent("AirGuard");
     expect(screen.getByTestId("story")).not.toHaveTextContent("{{");
   });
   it("skip link, one main landmark and the open section's panel inside it", async () => {
@@ -291,7 +294,7 @@ describe("probe", () => {
     }
   });
   it("scores a local mock and lists every request it sent", async () => {
-    const srv = await startMockServer({ defects: ["no_pkce_s256"], vertical: "banking" });
+    const srv = await startMockServer({ defects: ["no_pkce_s256"], vertical: "airlines" });
     try {
       await open("Probe"); await goLive();
       await userEvent.type(screen.getByLabelText("Target MCP endpoint URL"), srv.mock.resource);

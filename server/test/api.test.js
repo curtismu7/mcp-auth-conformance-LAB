@@ -61,7 +61,7 @@ test('clients reference: spec and ChatGPT are verified with sources; Claude and 
 test('POST /api/scan: good server 100, a defect fails its check; bad input is rejected with 400', async () => {
   const good = await (await app.post('/api/scan', { defects: [] })).json();
   assert.equal(good.score, 100); assert.equal(good.schema, 'conformance-scorecard/1');
-  const bad = await (await app.post('/api/scan', { defects: ['no_iss'], vertical: 'travel' })).json();
+  const bad = await (await app.post('/api/scan', { defects: ['no_iss'], vertical: 'airlines' })).json();
   assert.deepEqual(bad.checks.filter((c) => c.status === 'fail').map((c) => c.id), ['iss']);
   for (const m of bad.trace.messages) assert.match(m.traceparent, /^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/);
   for (const body of [{ defects: 'x' }, { defects: ['nope'] }, { defects: [1] }, { vertical: 'zzz' }, { defects: Array(40).fill('no_iss') }]) assert.equal((await app.post('/api/scan', body)).status, 400, JSON.stringify(body));
@@ -70,7 +70,7 @@ test('POST /api/scan: good server 100, a defect fails its check; bad input is re
 });
 
 test('every scenario passes through the API in every vertical', async () => {
-  for (const v of ['banking', 'travel', 'retail']) for (const s of SCENARIOS) {
+  for (const v of ['airlines', 'banking', 'retail']) for (const s of SCENARIOS) {
     const j = await (await app.post('/api/scenario', { id: s.id, vertical: v })).json();
     assert.equal(j.pass, true, `${s.id}/${v}: ${j.problems}`);
   }

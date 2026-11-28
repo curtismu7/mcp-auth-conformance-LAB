@@ -1,9 +1,9 @@
 // Mounts a mock on a loopback HTTP listener (for probe demos and tests). Loopback only; never binds anything else.
 import http from 'node:http';
-import { createMock } from './mock.js';
+import { createMock, DEFAULT_VERTICAL } from './mock.js';
 import { listenInRange } from './ports.js';
 
-export async function startMockServer({ defects = [], vertical = 'banking', port = 0, host = '127.0.0.1' } = {}) {
+export async function startMockServer({ defects = [], vertical = DEFAULT_VERTICAL, port = 0, host = '127.0.0.1' } = {}) {
   if (!['127.0.0.1', 'localhost', '::1'].includes(host)) throw new Error('mock server binds loopback only');
   let mock;
   const server = http.createServer((req, res) => {

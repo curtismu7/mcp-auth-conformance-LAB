@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { hostCheck, sameOriginWrites } from './safety.js';
 import { createHealth } from './health.js';
 import { CHECKS, runScan } from './engine.js';
-import { DEFECTS, DEFECT_IDS, createMock } from './mock.js';
+import { DEFECTS, DEFECT_IDS, DEFAULT_VERTICAL, createMock } from './mock.js';
 import { createMockClient } from './mock-client.js';
 import { createProbeClient, PROBE_LIMITS } from './probe.js';
 import { REFS } from './references.js';
@@ -47,7 +47,7 @@ export async function createApp({ env = process.env, clock } = {}) {
 
   app.get('/api/catalog', (req, res) => res.json({
     banner: BANNERS, diagrams: DIAGRAM_NAMES,
-    checks: CHECKS.map(publicCheck), defects: DEFECTS, verticals: VERTICALS, references: REFS.map(({ id, label, url, verified, read }) => ({ id, label, url, verified, read })),
+    checks: CHECKS.map(publicCheck), defects: DEFECTS, verticals: VERTICALS, defaultVertical: DEFAULT_VERTICAL, references: REFS.map(({ id, label, url, verified, read }) => ({ id, label, url, verified, read })),
     scenarios: SCENARIOS.map((s) => ({ id: s.id, slug: s.slug, kind: s.kind, title: s.title, steps: s.steps, takeaway: s.takeaway })),
     probe: { externalEnabled: allowExternal, ack: PROBE_ACK, limits: PROBE_LIMITS, rules: ['one origin (the one typed)', 'https only (http only for loopback)', 'GET and POST discovery requests only', 'no credentials sent', 'no redirect to another origin', 'private, link-local and metadata addresses refused', 'checks that need a token or would register a client are not run'] },
   }));
@@ -66,14 +66,14 @@ export async function createApp({ env = process.env, clock } = {}) {
     res.json(modeView());
   });
   app.get('/api/scenarios/:id', (req, res) => {
-    const s = SCENARIOS.find((x) => x.id === req.params.id || x.slug === req.params.id); const v = getVertical(String(req.query.vertical || 'banking'));
+    const s = SCENARIOS.find((x) => x.id === req.params.id || x.slug === req.params.id); const v = getVertical(String(req.query.vertical || DEFAULT_VERTICAL));
     if (!s || !v) return res.status(404).json({ error: 'not_found' });
     res.json(renderScenario(s, v));
   });
 
   app.post('/api/scan', async (req, res, next) => {
     try {
-      const { defects = [], vertical = 'banking' } = req.body || {};
+      const { defects = [], vertical = DEFAULT_VERTICAL } = req.body || {};
       if (!Array.isArray(defects) || defects.length > DEFECT_IDS.length || defects.some((d) => !DEFECT_IDS.includes(d))) return bad(res, 'defects must be an array of known defect ids.', { ids: DEFECT_IDS });
       if (!getVertical(vertical)) return bad(res, 'unknown vertical.', { ids: VERTICALS.map((v) => v.id) });
       last = await runScan({ client: createMockClient(createMock({ defects, vertical })), clock, label: defects.join('+') || 'good' });
@@ -82,7 +82,7 @@ export async function createApp({ env = process.env, clock } = {}) {
   });
   app.post('/api/scenario', async (req, res, next) => {
     try {
-      const { id, vertical = 'banking' } = req.body || {};
+      const { id, vertical = DEFAULT_VERTICAL } = req.body || {};
       if (typeof id !== 'string' || !SCENARIOS.some((s) => s.id === id || s.slug === id)) return bad(res, 'id must be a scenario id.', { ids: SCENARIOS.map((s) => s.id) });
       if (!getVertical(vertical)) return bad(res, 'unknown vertical.');
       res.json(await runScenario(id, vertical, { clock }));

@@ -32,7 +32,7 @@ Try it without a UI:
 
 ```
 curl -s -X POST http://127.0.0.1:4901/api/scan -H 'content-type: application/json' -H 'origin: http://127.0.0.1:4901' \
-  -d '{"defects":["no_pkce_s256"],"vertical":"banking"}'
+  -d '{"defects":["no_pkce_s256"],"vertical":"airlines"}'
 ```
 
 To try the Live probe against something safe, serve a mock on loopback and probe it (the probe asks for a confirmation text; see `GET /api/catalog`, `probe.ack`):
@@ -41,7 +41,7 @@ To try the Live probe against something safe, serve a mock on loopback and probe
 node scripts/mock.mjs --defects=no_iss      # prints the mock URL, e.g. http://127.0.0.1:4930/mcp
 ```
 
-What it checks (rules are data in `server/data/checks.json`, 17 checks): the 401 challenge, protected resource metadata (RFC 9728), authorization server metadata (RFC 8414 / OIDC), PKCE S256, RFC 9207 `iss`, CIMD and DCR, and, on the mock only, the `resource` parameter (RFC 8707), audience validation and 403 `insufficient_scope`. Scoring: MUST counts 3, SHOULD 2, MAY 0; a warning is half credit; checks that were not tested are excluded, not guessed. Of the 17 defects, `wildcard_gateway` (a warning) and `dcr_absent` (informational) fail no check. Stories are data in `server/data/scenarios.json`, with three vertical packs (banking, travel, retail) that fill the `{{cast}}` tokens.
+What it checks (rules are data in `server/data/checks.json`, 17 checks): the 401 challenge, protected resource metadata (RFC 9728), authorization server metadata (RFC 8414 / OIDC), PKCE S256, RFC 9207 `iss`, CIMD and DCR, and, on the mock only, the `resource` parameter (RFC 8707), audience validation and 403 `insufficient_scope`. Scoring: MUST counts 3, SHOULD 2, MAY 0; a warning is half credit; checks that were not tested are excluded, not guessed. Of the 17 defects, `wildcard_gateway` (a warning) and `dcr_absent` (informational) fail no check. Stories are data in `server/data/scenarios.json`, with three vertical packs (airlines, banking, retail) that fill the `{{cast}}` tokens. The default is airlines: AirGuard Airlines, a made-up airline (`get_itinerary`, `issue_refund`, scopes `itineraries:read` and `refunds:write`); the earlier ids `airline` and `travel` still resolve to it. The conformance rules do not depend on the pack.
 
 ## Settings file
 
