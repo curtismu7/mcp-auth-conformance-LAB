@@ -78,7 +78,8 @@ describe("shell", () => {
     expect(screen.queryByTestId("live-note")).toBeNull();
     await userEvent.selectOptions(screen.getByTestId("mode-select"), "mock");
     await waitFor(() => expect(screen.getByTestId("mode-badge")).toHaveTextContent("Mock"));
-    await waitFor(() => expect(modal()).toHaveAttribute("data-mode", "mock"));
+    // MOCK was already dismissed in this session, so going back to it does not show it again.
+    expect(screen.queryByTestId("mode-modal")).toBeNull();
   });
   it("opens in the mode the server answers, and a bad stored value falls back to it", async () => {
     // Rule 19: the mode is server-side, so the server's /api/info answer wins over anything stored.
