@@ -10,7 +10,7 @@ Catalog ids D35 (MCP authorization conformance scorecard) and D2 (MCP auth lab) 
 
 ## What is simulated
 
-**Mock mode (default).** Everything runs offline in one process. The targets are in-process mock MCP servers with selectable defects (the good server, and 17 ways to break it). There is no tenant, no real authorization server and no outbound network. Tokens are opaque strings the mock issues. The banner on every tab, presenter mode included, says so.
+**Mock mode (default).** Everything runs offline in one process. The targets are in-process mock MCP servers with selectable defects (the good server, and 17 ways to break it). There is no tenant, no real authorization server and no outbound network. Tokens are opaque strings the mock issues. The page opens on a MOCK modal that says so ("Got it" closes it for the browser session).
 
 **Live mode (owner-run).** Only the **Probe** tab goes live: it scores one URL you type with read-only discovery requests (GET and POST discovery, one unauthenticated `initialize`; no credentials; one origin; https, or http for loopback; private and metadata addresses refused). By default it reaches loopback targets only. The host owner can allow one https target at a time by setting `CONFLAB_PROBE_EXTERNAL=1` (see Settings file); Docker never does. Scorecard, Stories, Clients and Diagram keep using the simulated mock servers in Live mode, and each says so. A "pass" against a probe proves the discovery documents and the 401 challenge look right; checks that need a token or would register a client are not run (they show NOT TESTED). See `docs/safety.md`.
 
@@ -70,7 +70,7 @@ Other variables: `VITE_PORT` (Vite dev server, default 4900, `npm run dev -w web
 
 ## Mock and live modes
 
-The header has a **Mock | Live** toggle on every page, and the banner and the mode chip show the same mode. The choice is remembered in this browser. Mock is the default. In Mock mode the Probe tab says so and sends nothing. Live turns the Probe tab on; the other tabs stay simulated and show a note. The toggle is a page-level switch: the server's own gates (the confirmation text, loopback-only unless the host owner enabled external probing, the netguard) apply to every probe however it is sent. Presenter mode: press `P` (Esc leaves; keys with Ctrl, Cmd or Alt held, and typing in a field, are ignored); the banner stays.
+The header has a **Mock | Live** toggle on every page, and the modal (shown on load and again when the mode changes; Live reads as REAL) and the mode chip show the same mode. The choice is remembered in this browser. Mock is the default. In Mock mode the Probe tab says so and sends nothing. Live turns the Probe tab on; the other tabs stay simulated and show a note. The toggle is a page-level switch: the server's own gates (the confirmation text, loopback-only unless the host owner enabled external probing, the netguard) apply to every probe however it is sent. Presenter mode: press `P` (Esc leaves; keys with Ctrl, Cmd or Alt held, and typing in a field, are ignored).
 
 ## Health, doctor and reset
 

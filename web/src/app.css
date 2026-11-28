@@ -133,7 +133,7 @@ input[type="checkbox"] { width: 22px; height: 22px; min-height: 0; padding: 0; a
 .defects label { display: flex; gap: 8px; align-items: start; font-size: 14px; min-height: 32px; }
 .rules { margin: 4px 0 12px; padding-left: 20px; }
 
-/* Presenter mode: bigger text, the per-tab lede out of the way. The banner is never hidden. */
+/* Presenter mode: bigger text, the per-tab lede out of the way. */
 :root[data-present="1"] body { font-size: 18px; }
 :root[data-present="1"] [data-admin-only] { display: none; }
 

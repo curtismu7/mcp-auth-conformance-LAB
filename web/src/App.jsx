@@ -5,6 +5,7 @@ import VerifyMark from "./components/VerifyMark.jsx";
 import TopMenu, { applyFontSize } from "./top-menu/TopMenu.jsx";
 import { getCatalog, getDiagram, getInfo, resetServer, setMode as setModeRequest, getTalkTrack } from "./lib/api.js";
 import TalkTrackDialog from "./talk-track/TalkTrackDialog.jsx";
+import ModeModal from "./mode-modal/ModeModal.jsx";
 
 const LAB_VERSION = (() => { try { return JSON.parse(fs.readFileSync(new URL("../../package.json", import.meta.url), "utf8")).version || null; } catch { return null; } })();
 import { boxesFromDiagram } from "./lib/diagram.js";
@@ -17,8 +18,11 @@ import DiagramTab from "./tabs/DiagramTab.jsx";
 import RawTab from "./tabs/RawTab.jsx";
 
 export const TABS = [["scorecard", "Scorecard"], ["stories", "Stories"], ["probe", "Probe"], ["clients", "Clients"], ["diagram", "Diagram"], ["raw", "Raw"]];
-// Shown until the server's per-mode banner arrives; it never claims one mode before it knows.
-export const BANNER_UNKNOWN = "Simulated unless the header says Live. Targets are in-process mock MCP servers: no tenant, no outbound network. Loading the lab...";
+// The Real-or-mock modal's lines (shared/mode-modal). Live is this lab's word for Real, and only the Probe tab goes live; it reads MOCK until the server says Live.
+const MODE_LINES = {
+  mock: "Simulated (Mock mode). Targets are in-process mock MCP servers: no tenant, no real authorization server, no outbound network.",
+  real: "Live mode. Only the Probe tab goes live, sending read-only discovery requests to the one URL you type; the other tabs still use simulated in-process mock servers.",
+};
 const LIVE_NOTE = "Live mode applies to the Probe tab. This tab still uses simulated in-process mock servers.";
 const read = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
 const write = (k, v) => { try { localStorage.setItem(k, v); } catch { /* not remembered */ } };
@@ -36,8 +40,8 @@ export default function App() {
   const [mode, setModeState] = useState(() => (read("conflab.mode", "mock") === "live" ? "live" : "mock"));
   const [fontStep, setFontStep] = useState(() => { const f = read("conflab.font", "M"); return ["S", "M", "L"].includes(f) ? f : "M"; });
 
-  // Rule 19: the toggle asks the server (server-side mode), then reloads the catalog so the banner follows.
-  // Rule 19: the toggle asks the server (server-side mode), then reloads the catalog so the banner follows.
+  // Rule 19: the toggle asks the server (server-side mode), then reloads the catalog so the mode follows.
+  // Rule 19: the toggle asks the server (server-side mode), then reloads the catalog so the mode follows.
   const setMode = useCallback((m) => {
     setModeRequest(m === "real" ? "real" : "mock").then((v) => {
       const next = v?.mode === "live" ? "live" : "mock";
@@ -69,22 +73,21 @@ export default function App() {
     return () => window.removeEventListener("keydown", on);
   }, [togglePresent]);
 
-  // The banner is the first child of <main> (below the shell bar), outside every tab and outside [data-admin-only], so presenter mode never hides it.
-  const banner = catalog?.banner?.[mode] || BANNER_UNKNOWN;
+  const modal = <ModeModal mode={mode === "live" ? "real" : "mock"} lines={MODE_LINES} storageKey="cas-mode" />;
   const skip = <a className="skip" href="#main" onClick={(e) => { e.preventDefault(); document.getElementById("main")?.focus(); }}>Skip to content</a>;
   if (loadError || !catalog) return (
     <>
       {skip}
       <main className="page" id="main" tabIndex={-1}>
-        <div className="banner" role="note" data-state={mode} data-testid="banner">{banner}</div>
         {loadError ? <p className="alert" role="alert">Could not reach the lab server: {loadError}</p> : <p className="muted" role="status">Loading the lab...</p>}
       </main>
+      {modal}
     </>
   );
-  return <>{skip}<Shell catalog={catalog} tab={tab} theme={theme} setTheme={setTheme} present={present} togglePresent={togglePresent} mode={mode} setMode={setMode} fontStep={fontStep} setFontStep={setFontStep} banner={banner} talkOpen={talkOpen} setTalkOpen={setTalkOpen} talk={talk} /></>;
+  return <>{skip}{modal}<Shell catalog={catalog} tab={tab} theme={theme} setTheme={setTheme} present={present} togglePresent={togglePresent} mode={mode} setMode={setMode} fontStep={fontStep} setFontStep={setFontStep} talkOpen={talkOpen} setTalkOpen={setTalkOpen} talk={talk} /></>;
 }
 
-function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, setMode, fontStep, setFontStep, banner, talkOpen, setTalkOpen, talk }) {
+function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, setMode, fontStep, setFontStep, talkOpen, setTalkOpen, talk }) {
   const [vertical, setVertical] = useState(catalog.defaultVertical || catalog.verticals[0].id);
   const [card, setCard] = useState(null);
   const [scenarioId, setScenarioId] = useState(catalog.scenarios[0].id);
@@ -151,7 +154,6 @@ function Shell({ catalog, tab, theme, setTheme, present, togglePresent, mode, se
         </TopMenu>
       </header>
       <main className="page" id="main" tabIndex={-1}>
-        <div className="banner" role="note" data-state={mode} data-testid="banner">{banner}</div>
         <p className="muted reset-note" role="status" data-testid="reset-note">{resetNote}</p>
         <div id={`panel-${tab}`}>
           <p className="lede" data-admin-only>{fill("Score {{server}} for {{org}} against the MCP authorization expectations, with the evidence, the severity, a fix and the spec behind every check. Switch the persona to change the cast.", cast)}</p>

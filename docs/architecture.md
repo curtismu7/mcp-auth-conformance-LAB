@@ -25,7 +25,7 @@
 
 ## Web, modes and the diagram
 
-- **Mock | Live toggle.** A header toggle on every page. Mock is the default and sends nothing to the probe. Live turns on the Probe tab only; the other tabs stay on the simulated mock servers and say so. The banner (from `GET /api/catalog`, one text per mode) and the mode chip follow the toggle, in presenter mode too (P / Esc).
+- **Mock | Live toggle.** A header toggle on every page. Mock is the default and sends nothing to the probe. Live turns on the Probe tab only; the other tabs stay on the simulated mock servers and say so. The Real-or-mock modal (shared `mode-modal`, lines in `web/src/App.jsx`; Live reads as REAL) and the mode chip follow the toggle. `GET /api/catalog` still carries a `banner` text per mode (pinned by a server test) that the page no longer renders.
 - **Diagram.** `server/diagrams/mcp-authorization-flow.json` is diagram-studio/1 data (validated with the studio's own validator copy), served by `GET /api/diagrams/<name>` and loaded by name. A step's `hop` is the HTTP status of that hop. Boxes are movable; Simulate walks the scorecard's real requests, or the data's steps when there is no scorecard; Reset restores the box positions and the simulation.
 - **Talk track.** `server/data/talk-track.json` generates `docs/talk-track.md`; a test fails if they drift.
 - **Settings.** `server/src/settings.js` reads the shared `~/Development/.env` and takes only `CONFLAB_PROBE_EXTERNAL`.
