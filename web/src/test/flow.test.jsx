@@ -11,7 +11,7 @@ let live;
 beforeAll(async () => { live = await startLive(); });
 afterAll(async () => { await live.stop(); });
 beforeEach(async () => { window.location.hash = "#/scorecard"; document.documentElement.removeAttribute("data-present"); document.documentElement.removeAttribute("data-theme"); try { localStorage.clear(); } catch { /* none */ } setJsonView("raw"); if (live) await fetch("/api/mode", { method: "POST", headers: { "content-type": "application/json" }, body: '{"source":"mock"}' }); });
-afterEach(cleanup);
+afterEach(() => { cleanup(); try { sessionStorage.clear(); } catch { /* none */ } });
 
 // The six sections are the pill links in the shell bar's nav (aria-current="page" marks the open one).
 const navLink = (name) => within(screen.getByRole("navigation", { name: "Sections" })).getByRole("link", { name });
@@ -20,57 +20,83 @@ const open = async (tab) => {
   await screen.findByRole("navigation", { name: "Sections" });
   if (tab) { await userEvent.click(navLink(tab)); await waitFor(() => expect(navLink(tab)).toHaveAttribute("aria-current", "page")); }
 };
-const goLive = async () => { await userEvent.selectOptions(screen.getByTestId("mode-select"), "real"); await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "live")); };
+const goLive = async () => { await userEvent.selectOptions(screen.getByTestId("mode-select"), "real"); await waitFor(() => expect(screen.getByTestId("mode-badge")).toHaveTextContent("Live")); };
+const modal = () => screen.getByTestId("mode-modal");
 const status = (id) => within(screen.getByTestId(`check-${id}`)).getAllByText(/^(PASS|FAIL|WARN|NOT TESTED|INFO)$/)[0].textContent;
 
 describe("shell", () => {
-  it("shows what is simulated on every tab, including in presenter mode", async () => {
+  it("opens on a MOCK modal that says what is simulated; Got it closes it, and it stays away across tabs and presenter mode", async () => {
     await open();
-    expect(screen.getByTestId("banner")).toHaveTextContent("Simulated (Mock mode)");
+    expect(modal()).toHaveAttribute("data-mode", "mock");
+    expect(modal()).toHaveTextContent("MOCK");
+    expect(modal()).toHaveTextContent("Simulated (Mock mode)");
+    expect(modal()).toHaveTextContent("no tenant");
+    expect(modal()).toHaveTextContent("no outbound network");
+    expect(screen.queryByTestId("banner")).toBeNull();
+    await userEvent.click(screen.getByTestId("mode-modal-ok"));
+    expect(screen.queryByTestId("mode-modal")).toBeNull();
     await userEvent.click(screen.getByTestId("presenter"));
     expect(document.documentElement.dataset.present).toBe("1");
     for (const t of ["Stories", "Probe", "Clients", "Diagram", "Raw", "Scorecard"]) {
       await userEvent.click(navLink(t));
-      expect(screen.getByTestId("banner")).toBeVisible();
-      expect(screen.getByTestId("banner")).toHaveTextContent("No tenant");
+      expect(screen.queryByTestId("mode-modal")).toBeNull();
+      expect(screen.queryByTestId("banner")).toBeNull();
     }
   });
-  it("has a Mock | Live toggle in the header on every tab; Mock is the default; the banner and the mode chip follow it", async () => {
+  it("a reload in the same browser session does not show the modal again", async () => {
+    await open();
+    await userEvent.click(screen.getByTestId("mode-modal-ok"));
+    cleanup();
+    await open();
+    expect(screen.queryByTestId("mode-modal")).toBeNull();
+  });
+  it("has a Mock | Live toggle in the header on every tab; Mock is the default; the modal and the mode chip follow it", async () => {
     await open();
     expect(screen.getByTestId("mode-select")).toHaveValue("mock");
     expect(screen.getByTestId("mode-select")).toHaveValue("mock");
-    expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "mock");
+    expect(modal()).toHaveAttribute("data-mode", "mock");
+    await userEvent.click(screen.getByTestId("mode-modal-ok"));
     for (const t of ["Scorecard", "Stories", "Probe", "Clients", "Diagram", "Raw"]) {
       await userEvent.click(navLink(t));
       expect(screen.getByTestId("mode-select")).toBeVisible();
     }
     await goLive();
     expect(screen.getByTestId("mode-select")).toHaveValue("real");
-    expect(screen.getByTestId("banner")).toHaveTextContent("Live mode. Only the Probe tab goes live");
+    // Mock was dismissed, but switching to Live shows the modal again, for REAL.
+    await waitFor(() => expect(modal()).toHaveAttribute("data-mode", "real"));
+    expect(modal()).toHaveTextContent("REAL");
+    expect(modal()).toHaveTextContent("Live mode. Only the Probe tab goes live");
+    expect(modal()).toHaveTextContent("still use simulated in-process mock servers");
+    await userEvent.click(screen.getByTestId("mode-modal-ok"));
     expect(localStorage.getItem("conflab.mode")).toBe("live");
     for (const t of ["Scorecard", "Stories", "Clients", "Diagram", "Raw"]) {
       await userEvent.click(navLink(t));
-      expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "live");
+      expect(screen.getByTestId("mode-badge")).toHaveTextContent("Live");
       expect(screen.getByTestId("live-note")).toHaveTextContent("still uses simulated in-process mock servers");
     }
     await userEvent.click(navLink("Probe"));
     expect(screen.queryByTestId("live-note")).toBeNull();
     await userEvent.selectOptions(screen.getByTestId("mode-select"), "mock");
-    await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "mock"));
+    await waitFor(() => expect(screen.getByTestId("mode-badge")).toHaveTextContent("Mock"));
+    // MOCK was already dismissed in this session, so going back to it does not show it again.
+    expect(screen.queryByTestId("mode-modal")).toBeNull();
   });
   it("opens in the mode the server answers, and a bad stored value falls back to it", async () => {
     // Rule 19: the mode is server-side, so the server's /api/info answer wins over anything stored.
     localStorage.setItem("conflab.mode", "mock");
     await fetch("/api/mode", { method: "POST", headers: { "content-type": "application/json" }, body: '{"source":"real"}' });
     render(<App />); await screen.findByRole("navigation", { name: "Sections" });
-    await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "live"));
+    await waitFor(() => expect(screen.getByTestId("mode-badge")).toHaveTextContent("Live"));
+    await waitFor(() => expect(modal()).toHaveAttribute("data-mode", "real"));
     cleanup();
+    sessionStorage.clear();
     localStorage.setItem("conflab.mode", "<script>");
     await fetch("/api/mode", { method: "POST", headers: { "content-type": "application/json" }, body: '{"source":"mock"}' });
     render(<App />); await screen.findByRole("navigation", { name: "Sections" });
-    await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "mock"));
+    await waitFor(() => expect(screen.getByTestId("mode-badge")).toHaveTextContent("Mock"));
+    expect(modal()).toHaveAttribute("data-mode", "mock");
   });
-  it("presenter mode: P toggles, Esc leaves, the banner stays, and modifier keys or typing in a field are ignored", async () => {
+  it("presenter mode: P toggles, Esc leaves, the modal is not part of it, and modifier keys or typing in a field are ignored", async () => {
     await open();
     const down = (init) => act(() => { window.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, ...init })); });
     down({ key: "p", ctrlKey: true }); down({ key: "p", metaKey: true }); down({ key: "p", altKey: true });
@@ -78,12 +104,10 @@ describe("shell", () => {
     down({ key: "p" });
     expect(document.documentElement.dataset.present).toBe("1");
     expect(screen.getByTestId("presenter")).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByTestId("banner")).toBeVisible();
     down({ key: "Escape", ctrlKey: true });
     expect(document.documentElement.dataset.present).toBe("1");
     down({ key: "Escape" });
     expect(document.documentElement.dataset.present).toBeUndefined();
-    expect(screen.getByTestId("banner")).toBeVisible();
     down({ key: "P" });
     expect(document.documentElement.dataset.present).toBe("1");
     down({ key: "P" });
@@ -139,7 +163,7 @@ describe("shell", () => {
     expect(screen.getByRole("main")).toHaveAttribute("id", "main");
     expect(screen.getByRole("main").querySelector("#panel-scorecard")).not.toBeNull();
   });
-  it("shell bar first (brand h1, Mock badge, nav pills, TopMenu), then main with the banner as its first child", async () => {
+  it("shell bar first (brand h1, Mock badge, nav pills, TopMenu), then main with the reset note first and no banner", async () => {
     await open();
     const bar = document.querySelector("header.shell-bar");
     expect(bar).not.toBeNull();
@@ -150,8 +174,8 @@ describe("shell", () => {
     expect(bar.querySelector('.shell-nav a[aria-current="page"]')).toHaveTextContent("Scorecard");
     expect(bar.querySelector("[data-testid=top-menu]")).toHaveClass("shell-right");
     expect(bar.compareDocumentPosition(screen.getByRole("main")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByRole("main").firstElementChild).toBe(screen.getByTestId("banner"));
-    expect(screen.getByTestId("banner").nextElementSibling).toBe(screen.getByTestId("reset-note"));
+    expect(screen.queryByTestId("banner")).toBeNull();
+    expect(screen.getByRole("main").firstElementChild).toBe(screen.getByTestId("reset-note"));
     await goLive();
     expect(within(bar).getByTestId("mode-badge")).toHaveTextContent("Live");
     await userEvent.selectOptions(screen.getByTestId("mode-select"), "mock");
@@ -269,7 +293,7 @@ describe("probe", () => {
     await userEvent.click(btn);
     expect(fetchSpy.mock.calls.some(([u]) => String(u).endsWith("/api/probe"))).toBe(false);
     await userEvent.click(screen.getByRole("button", { name: "Switch to Real" }));
-    await waitFor(() => expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "live"));
+    await waitFor(() => expect(screen.getByTestId("mode-badge")).toHaveTextContent("Live"));
     expect(screen.queryByTestId("probe-mock-note")).toBeNull();
     expect(screen.getByRole("button", { name: "Probe this URL" })).toHaveAttribute("aria-disabled", "false");
     fetchSpy.mockRestore();
@@ -362,7 +386,7 @@ describe("diagram in the app", () => {
   });
 });
 
-describe("header Reset, banner and draggable boxes", () => {
+describe("header Reset and draggable boxes", () => {
   it("the header Reset tells the server to reset and says the boxes are back", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     await open("Diagram");
@@ -391,11 +415,6 @@ describe("header Reset, banner and draggable boxes", () => {
     await userEvent.click(resets[0]);
     await waitFor(() => expect(where()).toBe(start));
     expect(screen.getByTestId("caption")).toHaveTextContent("Press Simulate");
-  });
-
-  it("the banner sits outside every admin-only block, so presenter mode never hides it", async () => {
-    await open("Diagram");
-    expect(screen.getByTestId("banner").closest("[data-admin-only]")).toBeNull();
   });
 
   it("every diagram box stays draggable, and the boxes come from the diagram data the server serves", async () => {

@@ -10,7 +10,7 @@
 | Tenant | None | None |
 | What a green score means | The lab's rules behave as written | The target's discovery documents and 401 challenge look right; checks that need a token or would register a client were not run |
 
-Every tab, presenter mode included, shows a banner saying which of these applies. The header has a Mock | Live toggle on every page: Mock (default) is everything in the left column; Live turns on only the Probe tab (the right column), and the banner says so. The toggle is a page-level switch; the gates below apply to every probe however it is sent.
+The page opens on a MOCK or REAL modal saying which of these applies (Live reads as REAL), and shows it again when the mode changes. The header has a Mock | Live toggle on every page: Mock (default) is everything in the left column; Live turns on only the Probe tab (the right column), and the Live modal says so. The toggle is a page-level switch; the gates below apply to every probe however it is sent.
 
 ## Live probe (read-only, gated)
 

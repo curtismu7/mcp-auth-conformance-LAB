@@ -1,6 +1,6 @@
 {
   "title": "Talk track for SEs",
-  "intro": "About ten minutes. Start the lab (`./scripts/run.sh`, then http://127.0.0.1:4901/), press `P` for presenter mode if the room is large (Esc leaves it; the banner stays). The header toggle is Mock | Live and starts on Mock. Everything on screen in Mock mode is simulated: say so once, early. The banner on every tab says it too.",
+  "intro": "About ten minutes. Start the lab (`./scripts/run.sh`, then http://127.0.0.1:4901/), press `P` for presenter mode if the room is large (Esc leaves it). The header toggle is Mock | Live and starts on Mock. Everything on screen in Mock mode is simulated: say so once, early. The MOCK modal on opening says it too.",
   "point": "Before a customer connects ChatGPT, Claude or any MCP client to an MCP server, score its authorization: discovery documents, the 401 challenge, PKCE, the resource parameter and how clients register. Each failed check names its own fix and its spec clause.",
   "flow": [
     {
